@@ -151,7 +151,7 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-6 rounded-lg overflow-hidden shadow-md aspect-video relative border border-border">
+        <div className="w-full mb-6 rounded-lg overflow-hidden shadow-md aspect-video relative border border-border">
           <Image
             src={challengeData.imageSrc}
             alt={challengeData.imageAiHint}
@@ -159,7 +159,6 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
             objectFit="cover"
             data-ai-hint={challengeData.imageAiHint}
             priority
-            className="transform transition-transform duration-500 hover:scale-105"
           />
         </div>
 
