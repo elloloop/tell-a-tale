@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -114,6 +115,7 @@ body {
       transparent 1px,
       transparent 2rem /* Adjust line height to be more spacious for handwritten font */
     );
+    font-family: var(--font-patrick-hand), cursive; /* Ensure handwritten font */
     line-height: 2rem; /* Match background line height */
     background-attachment: local;
     border-color: hsl(var(--border));

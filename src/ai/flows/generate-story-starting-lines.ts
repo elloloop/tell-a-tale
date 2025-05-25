@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview Generates story starting lines based on a given image and theme.
+ * @fileOverview Generates a single story starting line based on a given image and theme.
  *
- * - generateStoryStartingLines - A function that generates story starting lines.
+ * - generateStoryStartingLines - A function that generates a story starting line.
  * - GenerateStoryStartingLinesInput - The input type for the generateStoryStartingLines function.
  * - GenerateStoryStartingLinesOutput - The return type for the generateStoryStartingLines function.
  */
@@ -23,9 +23,9 @@ export type GenerateStoryStartingLinesInput = z.infer<
 >;
 
 const GenerateStoryStartingLinesOutputSchema = z.object({
-  startingLines: z
-    .array(z.string())
-    .describe('An array of story starting lines.'),
+  startingLine: z
+    .string()
+    .describe('A single captivating starting line for the story.'),
 });
 export type GenerateStoryStartingLinesOutput = z.infer<
   typeof GenerateStoryStartingLinesOutputSchema
@@ -41,12 +41,12 @@ const prompt = ai.definePrompt({
   name: 'generateStoryStartingLinesPrompt',
   input: {schema: GenerateStoryStartingLinesInputSchema},
   output: {schema: GenerateStoryStartingLinesOutputSchema},
-  prompt: `You are a creative writing assistant. Generate 3 different starting lines for a story based on the image and theme provided.
+  prompt: `You are a creative writing assistant. Generate one captivating starting line for a story based on the image and theme provided.
 
 Theme: {{{theme}}}
 Image: {{media url=imageDataUri}}
 
-Ensure that the starting lines are diverse and engaging to spark the user's imagination. Return only an array of strings.`,
+Ensure that the starting line is engaging to spark the user's imagination. Return the single starting line as a string within the 'startingLine' field of a JSON object.`,
 });
 
 const generateStoryStartingLinesFlow = ai.defineFlow(
@@ -57,6 +57,11 @@ const generateStoryStartingLinesFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    // The model should directly return an object matching GenerateStoryStartingLinesOutputSchema
+    // So, if output is not null, it should have a startingLine property.
+    if (!output || typeof output.startingLine !== 'string') {
+      throw new Error('AI model did not return a valid starting line.');
+    }
+    return output; 
   }
 );

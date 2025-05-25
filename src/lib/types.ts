@@ -12,10 +12,7 @@ export interface DailyChallengeData {
   imageSrc: string;
   imageAiHint: string;
   theme: string;
-  storyStarters: {
-    beginning: string[];
-    middle: string[];
-  };
+  storyStarter: string; // Changed from storyStarters object to a single string
 }
 
 export interface SharedStoryPayload {

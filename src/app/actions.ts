@@ -10,8 +10,8 @@ import { z } from 'zod';
 export async function generatePrompts(input: GenerateStoryStartingLinesInput): Promise<GenerateStoryStartingLinesOutput | { error: string }> {
   try {
     const result = await genLines(input);
-    if (!result || !result.startingLines) {
-      return { error: "Failed to generate story lines. AI model returned unexpected data." };
+    if (!result || typeof result.startingLine !== 'string') {
+      return { error: "Failed to generate story line. AI model returned unexpected data." };
     }
     return result;
   } catch (error) {

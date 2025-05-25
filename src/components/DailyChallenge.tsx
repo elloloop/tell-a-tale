@@ -7,18 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles, Loader2, Lightbulb, Image as ImageIcon } from 'lucide-react'; // Added ImageIcon
-import type { DailyChallengeData } from '@/lib/types';
+import type { DailyChallengeData } from '@/lib/types'; // Ensure DailyChallengeData matches new structure
 import { generatePrompts, generateImageForChallenge } from '@/app/actions';
 
 // Softer placeholder
 const FALLBACK_IMAGE_SRC = "https://placehold.co/800x450/f0f0f0/aaaaaa.png";
 
 interface DailyChallengeProps {
-  onPromptsLoaded: (prompts: { beginning: string[], middle: string[] }, theme: string, imageSrc: string) => void;
+  onPromptsLoaded: (startingLine: string, theme: string, imageSrc: string) => void;
 }
 
 export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps) {
-  const [challengeData, setChallengeData] = useState<Omit<DailyChallengeData, 'imageSrc' | 'imageAiHint'> | null>(null);
+  // Updated challengeData state to reflect new DailyChallengeData structure
+  const [challengeData, setChallengeData] = useState<{ theme: string; storyStarter: string; } | null>(null);
   const [displayImageSrc, setDisplayImageSrc] = useState<string>(FALLBACK_IMAGE_SRC);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingStage, setLoadingStage] = useState<string>("Initializing...");
@@ -54,25 +55,15 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
         if ('error' in promptsResult) {
           setError(promptsResult.error);
           setChallengeData(null);
-        } else if (promptsResult.startingLines && promptsResult.startingLines.length >= 1) {
-          const lines = promptsResult.startingLines;
-          const beginningLines = lines.slice(0, Math.min(lines.length, 2));
-          const middleLines = lines.length > 2 ? [lines[2]] : (lines.length === 2 && lines.length > beginningLines.length ? [lines[1]] : []);
-
-          const prompts = {
-            beginning: beginningLines,
-            middle: middleLines,
-          };
-
+        } else if (promptsResult.startingLine && typeof promptsResult.startingLine === 'string' && promptsResult.startingLine.trim() !== '') {
           const newChallengeCoreData = {
             theme: dailyTheme,
-            storyStarters: prompts,
+            storyStarter: promptsResult.startingLine,
           };
           setChallengeData(newChallengeCoreData);
-          // Pass the image source that was actually used for prompt generation
-          onPromptsLoaded(prompts, dailyTheme, currentImageSrc);
+          onPromptsLoaded(promptsResult.startingLine, dailyTheme, currentImageSrc);
         } else {
-           setError("Received insufficient starting lines from AI.");
+           setError("Received no starting line or an invalid line from AI.");
            setChallengeData(null);
         }
       } catch (e: any) {
@@ -121,11 +112,7 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
     );
   }
   
-  // If there's a non-critical error (e.g. image gen failed but prompts loaded with fallback)
-  // it will be shown as an alert within the card.
-
   if (!challengeData) {
-     // This case should ideally be covered by the error state above if loading completely fails
     return (
       <Card className="w-full shadow-xl bg-card/70">
         <CardHeader>
@@ -160,42 +147,27 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
             <Image
               key={displayImageSrc} 
               src={displayImageSrc}
-              alt={dailyImageHint} // Hint remains relevant
+              alt={dailyImageHint}
               layout="fill"
               objectFit="cover" 
-              data-ai-hint={dailyImageHint} // Keep the hint for potential regeneration or context
+              data-ai-hint={dailyImageHint}
               priority 
             />
           )}
         </div>
 
         <div>
-          <h3 className="text-xl font-semibold mb-3 text-foreground">Story Starters & Cues:</h3>
-          {challengeData.storyStarters.beginning.length > 0 && (
+          <h3 className="text-xl font-semibold mb-3 text-foreground">Today&apos;s Starting Line:</h3>
+          {challengeData.storyStarter && (
             <div className="mb-4 p-4 bg-background/50 rounded-lg border border-border shadow-sm">
-              <h4 className="font-semibold text-primary mb-2">Beginning Lines:</h4>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                {challengeData.storyStarters.beginning.map((line, index) => (
-                  <li key={`start-${index}`} className="italic">"{line}"</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {challengeData.storyStarters.middle.length > 0 && (
-             <div className="mb-4 p-4 bg-background/50 rounded-lg border border-border shadow-sm">
-              <h4 className="font-semibold text-primary mb-2">Mid-Story Cues:</h4>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                {challengeData.storyStarters.middle.map((line, index) => (
-                  <li key={`middle-${index}`} className="italic">... {line} ...</li>
-                ))}
-              </ul>
+              <p className="italic text-muted-foreground">"{challengeData.storyStarter}"</p>
             </div>
           )}
           <Alert className="mt-4 bg-accent/10 border-accent/30">
             <Sparkles className="h-4 w-4 text-accent" />
             <AlertTitle className="text-accent">Writing Tip</AlertTitle>
             <AlertDescription className="text-accent-foreground/80">
-              Let the image and theme guide you. Don&apos;t be afraid to twist the prompts or go in a completely new direction!
+              Let the image and theme guide you. Don&apos;t be afraid to twist the prompt or go in a completely new direction!
             </AlertDescription>
           </Alert>
         </div>
