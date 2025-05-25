@@ -6,48 +6,25 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Sparkles, Loader2, Lightbulb } from 'lucide-react';
+import { Sparkles, Loader2, Lightbulb, Image as ImageIcon } from 'lucide-react'; // Added ImageIcon
 import type { DailyChallengeData } from '@/lib/types';
-import { generatePrompts } from '@/app/actions';
+import { generatePrompts, generateImageForChallenge } from '@/app/actions';
 
-// Helper function to convert image URL to data URI
-async function toDataURL(url: string): Promise<string> {
-  try {
-    if (typeof window === 'undefined') {
-      console.warn("toDataURL is being called in a non-browser environment. This might fail for remote URLs.");
-      if (url.startsWith('data:')) return url;
-      const placeholderBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
-      return placeholderBase64;
-    }
-
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch image: ${response.statusText}`);
-    }
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch (error) {
-    console.error("Error converting image to data URI:", error);
-    return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
-  }
-}
-
+// Softer placeholder
+const FALLBACK_IMAGE_SRC = "https://placehold.co/800x450/f0f0f0/aaaaaa.png";
 
 interface DailyChallengeProps {
   onPromptsLoaded: (prompts: { beginning: string[], middle: string[] }, theme: string, imageSrc: string) => void;
 }
 
 export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps) {
-  const [challengeData, setChallengeData] = useState<DailyChallengeData | null>(null);
+  const [challengeData, setChallengeData] = useState<Omit<DailyChallengeData, 'imageSrc' | 'imageAiHint'> | null>(null);
+  const [displayImageSrc, setDisplayImageSrc] = useState<string>(FALLBACK_IMAGE_SRC);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingStage, setLoadingStage] = useState<string>("Initializing...");
   const [error, setError] = useState<string | null>(null);
 
-  const dailyImageSrc = "https://placehold.co/800x450.png";
+  // Default theme and hint, can be made dynamic later
   const dailyImageHint = "dragon prince castle";
   const dailyTheme = "A Royal Adventure with a Friendly Dragon";
 
@@ -55,15 +32,30 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
     async function fetchChallenge() {
       setIsLoading(true);
       setError(null);
-      try {
-        const imageDataUri = await toDataURL(dailyImageSrc);
-        const result = await generatePrompts({ imageDataUri, theme: dailyTheme });
+      let currentImageSrc = FALLBACK_IMAGE_SRC;
 
-        if ('error' in result) {
-          setError(result.error);
+      try {
+        // 1. Generate Image
+        setLoadingStage("Generating unique image...");
+        const imageResult = await generateImageForChallenge({ hint: dailyImageHint });
+
+        if ('error' in imageResult || !imageResult.imageDataUri) {
+          setError(`Image generation failed: ${('error'in imageResult && imageResult.error) || 'Unknown error'}. Using fallback.`);
+          // Continue with fallback image for prompts
+        } else {
+          currentImageSrc = imageResult.imageDataUri;
+          setDisplayImageSrc(currentImageSrc);
+        }
+
+        // 2. Generate Prompts using the (potentially newly generated) image
+        setLoadingStage("Crafting story prompts...");
+        const promptsResult = await generatePrompts({ imageDataUri: currentImageSrc, theme: dailyTheme });
+
+        if ('error' in promptsResult) {
+          setError(promptsResult.error);
           setChallengeData(null);
-        } else if (result.startingLines && result.startingLines.length >= 1) {
-          const lines = result.startingLines;
+        } else if (promptsResult.startingLines && promptsResult.startingLines.length >= 1) {
+          const lines = promptsResult.startingLines;
           const beginningLines = lines.slice(0, Math.min(lines.length, 2));
           const middleLines = lines.length > 2 ? [lines[2]] : (lines.length === 2 && lines.length > beginningLines.length ? [lines[1]] : []);
 
@@ -72,14 +64,13 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
             middle: middleLines,
           };
 
-          const newChallengeData: DailyChallengeData = {
-            imageSrc: dailyImageSrc,
-            imageAiHint: dailyImageHint,
+          const newChallengeCoreData = {
             theme: dailyTheme,
             storyStarters: prompts,
           };
-          setChallengeData(newChallengeData);
-          onPromptsLoaded(prompts, dailyTheme, dailyImageSrc);
+          setChallengeData(newChallengeCoreData);
+          // Pass the image source that was actually used for prompt generation
+          onPromptsLoaded(prompts, dailyTheme, currentImageSrc);
         } else {
            setError("Received insufficient starting lines from AI.");
            setChallengeData(null);
@@ -90,11 +81,12 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
         setChallengeData(null);
       } finally {
         setIsLoading(false);
+        setLoadingStage("");
       }
     }
     fetchChallenge();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Ensure this runs once on mount
 
   if (isLoading) {
     return (
@@ -103,11 +95,13 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
           <CardTitle className="flex items-center gap-2 text-2xl font-semibold">
             <Loader2 className="h-6 w-6 animate-spin text-primary" /> Loading Daily Inspiration...
           </CardTitle>
-          <CardDescription>Fetching a fresh image and creative sparks for your next story!</CardDescription>
+          <CardDescription>{loadingStage}</CardDescription>
         </CardHeader>
         <CardContent className="text-center p-8">
           <div className="animate-pulse">
-            <div className="bg-muted rounded-lg h-64 w-full mb-4"></div>
+            <div className="bg-muted rounded-lg h-64 w-full mb-4 flex items-center justify-center">
+              <ImageIcon className="h-16 w-16 text-muted-foreground/50" />
+            </div>
             <div className="h-4 bg-muted rounded w-3/4 mx-auto mb-2"></div>
             <div className="h-4 bg-muted rounded w-1/2 mx-auto"></div>
           </div>
@@ -116,7 +110,7 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
     );
   }
 
-  if (error) {
+  if (error && !challengeData) { // Show critical error if challengeData couldn't be loaded at all
     return (
       <Alert variant="destructive" className="shadow-lg">
         <Sparkles className="h-4 w-4" />
@@ -126,8 +120,12 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
       </Alert>
     );
   }
+  
+  // If there's a non-critical error (e.g. image gen failed but prompts loaded with fallback)
+  // it will be shown as an alert within the card.
 
   if (!challengeData) {
+     // This case should ideally be covered by the error state above if loading completely fails
     return (
       <Card className="w-full shadow-xl bg-card/70">
         <CardHeader>
@@ -137,6 +135,7 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
       </Card>
     );
   }
+
 
   return (
     <Card className="w-full overflow-hidden shadow-xl bg-card/70 backdrop-blur-sm border-2 border-border">
@@ -149,15 +148,22 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="w-full mb-6 rounded-lg overflow-hidden shadow-md aspect-video relative border border-border">
-          {challengeData.imageSrc && (
+        {error && ( // Display non-critical errors here, e.g., image generation failure
+          <Alert variant="destructive" className="mb-4">
+            <Sparkles className="h-4 w-4" />
+            <AlertTitle>Notice</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        <div className="w-full mb-6 rounded-lg overflow-hidden shadow-md aspect-video relative border border-border bg-muted">
+          {displayImageSrc && (
             <Image
-              key={challengeData.imageSrc} 
-              src={challengeData.imageSrc}
-              alt={challengeData.imageAiHint}
+              key={displayImageSrc} 
+              src={displayImageSrc}
+              alt={dailyImageHint} // Hint remains relevant
               layout="fill"
               objectFit="cover" 
-              data-ai-hint={challengeData.imageAiHint}
+              data-ai-hint={dailyImageHint} // Keep the hint for potential regeneration or context
               priority 
             />
           )}
