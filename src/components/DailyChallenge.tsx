@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -56,8 +57,8 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
   const [error, setError] = useState<string | null>(null);
 
   const dailyImageSrc = "https://placehold.co/800x400.png";
-  const dailyImageHint = "fantasy landscape";
-  const dailyTheme = "An Unexpected Journey";
+  const dailyImageHint = "cartoon animals"; // Updated for kid-friendly theme
+  const dailyTheme = "A Day at the Magical Zoo"; // Updated theme to match
 
   useEffect(() => {
     async function fetchChallenge() {
@@ -208,3 +209,4 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
     </Card>
   );
 }
+
