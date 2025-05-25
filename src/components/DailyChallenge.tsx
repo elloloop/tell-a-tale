@@ -149,17 +149,16 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* Added bg-red-500 for temporary debugging */}
-        <div className="w-full mb-6 rounded-lg overflow-hidden shadow-md aspect-video relative border border-border bg-red-500">
+        <div className="w-full mb-6 rounded-lg overflow-hidden shadow-md aspect-video relative border border-border">
           {challengeData.imageSrc && (
             <Image
-              key={challengeData.imageSrc} // Added key
+              key={challengeData.imageSrc} 
               src={challengeData.imageSrc}
               alt={challengeData.imageAiHint}
               layout="fill"
-              // objectFit="cover" // Temporarily removed for debugging
+              objectFit="cover" 
               data-ai-hint={challengeData.imageAiHint}
-              // priority // Temporarily removed for debugging
+              priority 
             />
           )}
         </div>
@@ -198,4 +197,3 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
     </Card>
   );
 }
-
