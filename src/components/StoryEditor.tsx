@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Story } from '@/lib/types';
 import useLocalStorage from '@/lib/hooks/useLocalStorage';
 import { checkStorySafety } from '@/app/actions';
-import { Send, Loader2, AlertCircle, Info, Eraser } from 'lucide-react';
+import { Send, Loader2, Info, Eraser } from 'lucide-react';
 
 interface StoryEditorProps {
   currentTheme: string;
@@ -90,19 +90,19 @@ export default function StoryEditor({ currentTheme, currentImageSrc, onStorySubm
   };
 
   return (
-    <Card className="w-full shadow-xl mt-8">
+    <Card className="w-full shadow-xl mt-8 bg-card/70 border-2 border-border">
       <CardHeader>
         <CardTitle className="text-2xl font-semibold">Weave Your Tale</CardTitle>
-        <CardDescription>Inspired? Write your story below. Your words, your world.</CardDescription>
+        <CardDescription className="text-foreground/80">Inspired? Write your story below. Your words, your world.</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent>
           <Textarea
-            placeholder="Once upon a time, in a world sparked by today's image..."
+            placeholder="Once upon a time, on a page much like this..."
             value={storyText}
             onChange={(e) => setStoryText(e.target.value)}
             rows={10}
-            className="resize-none focus:ring-accent focus:border-accent text-base"
+            className="ruled-textarea resize-none focus:ring-accent focus:border-accent" // Added ruled-textarea class
             disabled={isLoading}
             aria-label="Story composition text area"
           />
@@ -122,7 +122,7 @@ export default function StoryEditor({ currentTheme, currentImageSrc, onStorySubm
             disabled={isLoading || !storyText}
             className="flex items-center gap-2"
           >
-            <Eraser className="h-4 w-4" /> Clear
+            <Eraser className="h-4 w-4" /> Clear Page
           </Button>
           <Button type="submit" disabled={isLoading || storyText.trim().length < 10} className="flex items-center gap-2">
             {isLoading ? (
@@ -130,7 +130,7 @@ export default function StoryEditor({ currentTheme, currentImageSrc, onStorySubm
             ) : (
               <Send className="h-5 w-5" />
             )}
-            Submit Story
+            Save My Story
           </Button>
         </CardFooter>
       </form>

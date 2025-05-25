@@ -1,18 +1,14 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Patrick_Hand } from 'next/font/google'; // Changed font
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import AppHeader from '@/components/AppHeader';
 import AppFooter from '@/components/AppFooter';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const patrickHand = Patrick_Hand({ // Changed font
+  variable: '--font-patrick-hand', // Changed font variable
   subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+  weight: ['400'], // Patrick Hand only has 400 weight
 });
 
 export const metadata: Metadata = {
@@ -27,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
+      <body className={`${patrickHand.variable} antialiased flex flex-col min-h-screen`}> {/* Updated font variable */}
         <AppHeader />
         <main className="flex-grow container mx-auto px-4 py-8">
           {children}
