@@ -15,11 +15,11 @@ async function toDataURL(url: string): Promise<string> {
   try {
     if (typeof window === 'undefined') {
       console.warn("toDataURL is being called in a non-browser environment. This might fail for remote URLs.");
-      if (url.startsWith('data:')) return url; 
+      if (url.startsWith('data:')) return url;
       const placeholderBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
       return placeholderBase64;
     }
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.statusText}`);
@@ -33,7 +33,7 @@ async function toDataURL(url: string): Promise<string> {
     });
   } catch (error) {
     console.error("Error converting image to data URI:", error);
-    return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="; 
+    return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
   }
 }
 
@@ -47,10 +47,9 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Updated default image and theme for a storybook feel
   const dailyImageSrc = "https://placehold.co/800x450.png";
-  const dailyImageHint = "dragon prince castle"; 
-  const dailyTheme = "A Royal Adventure with a Friendly Dragon"; 
+  const dailyImageHint = "dragon prince castle";
+  const dailyTheme = "A Royal Adventure with a Friendly Dragon";
 
   useEffect(() => {
     async function fetchChallenge() {
@@ -63,12 +62,11 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
         if ('error' in result) {
           setError(result.error);
           setChallengeData(null);
-        } else if (result.startingLines && result.startingLines.length >= 1) { // Needs at least one line
+        } else if (result.startingLines && result.startingLines.length >= 1) {
           const lines = result.startingLines;
-          // Simplified logic: use up to 2 lines for beginning, the next one (if exists) for middle.
           const beginningLines = lines.slice(0, Math.min(lines.length, 2));
           const middleLines = lines.length > 2 ? [lines[2]] : (lines.length === 2 && lines.length > beginningLines.length ? [lines[1]] : []);
-          
+
           const prompts = {
             beginning: beginningLines,
             middle: middleLines,
@@ -96,7 +94,7 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
     }
     fetchChallenge();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Runs once on mount
+  }, []);
 
   if (isLoading) {
     return (
@@ -151,15 +149,19 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="w-full mb-6 rounded-lg overflow-hidden shadow-md aspect-video relative border border-border">
-          <Image
-            src={challengeData.imageSrc}
-            alt={challengeData.imageAiHint}
-            layout="fill"
-            objectFit="cover"
-            data-ai-hint={challengeData.imageAiHint}
-            priority
-          />
+        {/* Added bg-red-500 for temporary debugging */}
+        <div className="w-full mb-6 rounded-lg overflow-hidden shadow-md aspect-video relative border border-border bg-red-500">
+          {challengeData.imageSrc && (
+            <Image
+              key={challengeData.imageSrc} // Added key
+              src={challengeData.imageSrc}
+              alt={challengeData.imageAiHint}
+              layout="fill"
+              // objectFit="cover" // Temporarily removed for debugging
+              data-ai-hint={challengeData.imageAiHint}
+              // priority // Temporarily removed for debugging
+            />
+          )}
         </div>
 
         <div>
@@ -196,3 +198,4 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
     </Card>
   );
 }
+
