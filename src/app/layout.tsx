@@ -6,7 +6,7 @@ import AppHeader from '@/components/AppHeader';
 import AppFooter from '@/components/AppFooter';
 
 const patrickHand = Patrick_Hand({
-  variable: '--font-patrick-hand', // We'll keep the variable for direct use if needed
+  variable: '--font-patrick-hand',
   subsets: ['latin'],
   weight: ['400'], // Patrick Hand only has 400 weight
 });
@@ -22,8 +22,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
-      {/* Apply the font class directly to the body for global effect */}
+    <html lang="en" className={`${patrickHand.variable} h-full`}>
+      {/* Apply the font class directly to the body for global effect, variable to html */}
       <body className={`${patrickHand.className} antialiased flex flex-col min-h-screen`}>
         <AppHeader />
         <main className="flex-grow container mx-auto px-4 py-8">
