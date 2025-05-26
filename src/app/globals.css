@@ -3,12 +3,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ensure the body uses the font if the class method has any issues,
-   but patrickHand.className on body in layout.tsx should handle this.
-   Keeping var definition for explicit use elsewhere if needed. */
-body {
-  font-family: var(--font-patrick-hand), cursive;
-}
+/*
+  REMOVED:
+  body {
+    font-family: var(--font-patrick-hand), cursive;
+  }
+  The patrickHand.className on body in layout.tsx should handle global font application.
+  The --font-patrick-hand variable is still available for specific elements like ruled-textarea.
+*/
 
 @layer base {
   :root {
@@ -100,6 +102,7 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    /* font-family should be applied by patrickHand.className in layout.tsx */
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -124,7 +127,7 @@ body {
     border-color: hsl(var(--border));
     /* Adjusted padding-top significantly to help text baseline align with the ruled lines.
        This value might need further fine-tuning based on the visual result with Patrick Hand. */
-    padding-top: 0.65rem; 
+    padding-top: 0.65rem; /* Increased padding-top to lower the text */
     /* Ensure some horizontal and bottom padding for aesthetics and to avoid text collision */
     padding-left: 0.5rem;
     padding-right: 0.5rem;
