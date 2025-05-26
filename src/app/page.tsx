@@ -5,7 +5,7 @@ import { useState } from 'react';
 import DailyChallenge from '@/components/DailyChallenge';
 import StoryEditor from '@/components/StoryEditor';
 import type { Story } from '@/lib/types';
-import { Separator } from '@/components/ui/separator';
+// import { Separator } from '@/components/ui/separator'; // Separator removed
 
 export default function HomePage() {
   const [currentStartingLine, setCurrentStartingLine] = useState<string | null>(null);
@@ -27,11 +27,10 @@ export default function HomePage() {
   };
 
   return (
-    <div className="space-y-8"> {/* Reduced overall spacing for tighter feel */}
+    <div className="space-y-4"> {/* Reduced spacing from space-y-8 */}
       <DailyChallenge onPromptsLoaded={handlePromptsLoaded} />
       
-      {/* More subtle separator */}
-      <Separator className="my-4 bg-border/30 h-px" /> 
+      {/* Separator removed */}
 
       {currentStartingLine && currentTheme && currentImageSrc ? (
         <StoryEditor

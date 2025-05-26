@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -90,7 +91,7 @@ export default function StoryEditor({ currentTheme, currentImageSrc, onStorySubm
   };
 
   return (
-    <Card className="w-full shadow-xl mt-8 bg-card/70 border-2 border-border">
+    <Card className="w-full shadow-xl bg-card/70 border-2 border-border"> {/* Removed mt-8 */}
       <CardHeader>
         <CardTitle className="text-2xl font-semibold">Weave Your Tale</CardTitle>
         <CardDescription className="text-foreground/80">Inspired? Write your story below. Your words, your world.</CardDescription>
