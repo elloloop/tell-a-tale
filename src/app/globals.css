@@ -98,7 +98,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* font-family is applied by indieFlower.className in layout.tsx */
+    font-family: var(--font-indie-flower), cursive; /* Explicitly use the CSS variable */
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -117,7 +117,7 @@
       transparent 1px,
       transparent 2rem /* Adjust line height to be more spacious for handwritten font */
     );
-    font-family: var(--font-indie-flower), cursive; /* Changed to Indie Flower */
+    font-family: var(--font-indie-flower), cursive; /* Ensure Indie Flower is used */
     line-height: 2rem; /* Match background line height */
     background-attachment: local;
     border-color: hsl(var(--border));
