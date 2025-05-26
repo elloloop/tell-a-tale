@@ -123,4 +123,11 @@ body {
     color: hsl(var(--foreground)); /* Ensure text color is from theme */
     font-size: 1.125rem; /* Slightly larger font for handwritten feel */
   }
+
+  .storybook-page-container {
+    @apply bg-background shadow-lg max-w-3xl mx-auto;
+    border: 2px solid hsl(var(--foreground) / 0.7); /* Ink border */
+    border-radius: 0.75rem; /* Slightly rounded page corners */
+    padding: 1.5rem; /* Spacing inside the page */
+  }
 }

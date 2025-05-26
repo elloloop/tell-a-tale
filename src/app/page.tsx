@@ -5,7 +5,6 @@ import { useState } from 'react';
 import DailyChallenge from '@/components/DailyChallenge';
 import StoryEditor from '@/components/StoryEditor';
 import type { Story } from '@/lib/types';
-// import { Separator } from '@/components/ui/separator'; // Separator removed
 
 export default function HomePage() {
   const [currentStartingLine, setCurrentStartingLine] = useState<string | null>(null);
@@ -27,24 +26,24 @@ export default function HomePage() {
   };
 
   return (
-    <div className="space-y-4"> {/* Reduced spacing from space-y-8 */}
-      <DailyChallenge onPromptsLoaded={handlePromptsLoaded} />
-      
-      {/* Separator removed */}
-
-      {currentStartingLine && currentTheme && currentImageSrc ? (
-        <StoryEditor
-          currentTheme={currentTheme}
-          currentImageSrc={currentImageSrc}
-          onStorySubmitted={handleStorySubmitted}
-          // Optionally pass currentStartingLine if StoryEditor needs to display it or prefill
-          // For now, StoryEditor remains a blank slate as per current design
-        />
-      ) : (
-        <div className="text-center text-muted-foreground py-8">
-          Loading story editor once inspiration is ready...
-        </div>
-      )}
+    <div className="space-y-4">
+      {/* storybook-page-container will provide the overall page look */}
+      <div className="storybook-page-container">
+        <DailyChallenge onPromptsLoaded={handlePromptsLoaded} />
+        
+        {currentStartingLine && currentTheme && currentImageSrc ? (
+          <StoryEditor
+            currentTheme={currentTheme}
+            currentImageSrc={currentImageSrc}
+            storyPrompt={currentStartingLine} // Pass starting line as storyPrompt
+            onStorySubmitted={handleStorySubmitted}
+          />
+        ) : (
+          <div className="text-center text-muted-foreground py-8">
+            Loading story editor once inspiration is ready...
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,10 +1,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import type { Story } from '@/lib/types';
@@ -15,18 +14,26 @@ import { Send, Loader2, Info, Eraser } from 'lucide-react';
 interface StoryEditorProps {
   currentTheme: string;
   currentImageSrc: string;
+  storyPrompt: string | null; // Renamed from initialStartingLine for clarity
   onStorySubmitted: (newStory: Story) => void;
 }
 
-export default function StoryEditor({ currentTheme, currentImageSrc, onStorySubmitted }: StoryEditorProps) {
+export default function StoryEditor({ currentTheme, currentImageSrc, storyPrompt, onStorySubmitted }: StoryEditorProps) {
   const [storyText, setStoryText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [stories, setStories] = useLocalStorage<Story[]>('tell-a-tale-stories', []);
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Pre-fill the textarea with the storyPrompt when it's provided.
+    // Add a couple of newlines to encourage writing on the next "ruled" line.
+    setStoryText(storyPrompt ? storyPrompt + '\n\n' : '');
+  }, [storyPrompt]);
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (storyText.trim().length < 10) { // Basic validation
+    if (storyText.trim().length < 10) { 
       toast({
         title: 'Story Too Short',
         description: 'Please write a bit more for your story (at least 10 characters).',
@@ -71,8 +78,9 @@ export default function StoryEditor({ currentTheme, currentImageSrc, onStorySubm
       };
 
       setStories([...stories, newStory]);
-      onStorySubmitted(newStory); // Callback for parent component if needed
-      setStoryText('');
+      onStorySubmitted(newStory);
+      // Do not clear storyText here if we want the prompt to remain visible
+      // setStoryText(''); 
       toast({
         title: 'Story Saved!',
         description: 'Your masterpiece is now safely stored in your local tales.',
@@ -91,19 +99,19 @@ export default function StoryEditor({ currentTheme, currentImageSrc, onStorySubm
   };
 
   return (
-    <Card className="w-full shadow-xl bg-card/70 border-2 border-border"> {/* Removed mt-8 */}
-      <CardHeader>
-        <CardTitle className="text-2xl font-semibold">Weave Your Tale</CardTitle>
-        <CardDescription className="text-foreground/80">Inspired? Write your story below. Your words, your world.</CardDescription>
-      </CardHeader>
+    // Removed Card structure to fit into storybook-page-container
+    <div className="w-full pt-4"> 
+      <h2 className="text-xl font-semibold text-primary mb-3 text-center">
+        {storyPrompt ? "Continue the Adventure:" : "Start Your Tale:"}
+      </h2>
       <form onSubmit={handleSubmit}>
-        <CardContent>
+        <div> {/* Replaces CardContent */}
           <Textarea
-            placeholder="Once upon a time, on a page much like this..."
+            placeholder={storyPrompt ? "The story continues..." : "Once upon a time, on a page much like this..."}
             value={storyText}
             onChange={(e) => setStoryText(e.target.value)}
             rows={10}
-            className="ruled-textarea resize-none focus:ring-accent focus:border-accent" // Added ruled-textarea class
+            className="ruled-textarea resize-none focus:ring-accent focus:border-accent"
             disabled={isLoading}
             aria-label="Story composition text area"
           />
@@ -114,16 +122,16 @@ export default function StoryEditor({ currentTheme, currentImageSrc, onStorySubm
               Your stories are saved locally in your browser&apos;s storage. They are not uploaded to any server unless you choose to share them.
             </AlertDescription>
           </Alert>
-        </CardContent>
-        <CardFooter className="flex justify-between items-center">
+        </div>
+        <div className="flex justify-between items-center mt-6"> {/* Replaces CardFooter */}
            <Button
             type="button"
             variant="outline"
-            onClick={() => setStoryText('')}
-            disabled={isLoading || !storyText}
+            onClick={() => setStoryText(storyPrompt ? storyPrompt + '\n\n' : '')} // Reset to prompt or clear
+            disabled={isLoading}
             className="flex items-center gap-2"
           >
-            <Eraser className="h-4 w-4" /> Clear Page
+            <Eraser className="h-4 w-4" /> {storyPrompt ? "Reset to Prompt" : "Clear Page"}
           </Button>
           <Button type="submit" disabled={isLoading || storyText.trim().length < 10} className="flex items-center gap-2">
             {isLoading ? (
@@ -133,8 +141,8 @@ export default function StoryEditor({ currentTheme, currentImageSrc, onStorySubm
             )}
             Save My Story
           </Button>
-        </CardFooter>
+        </div>
       </form>
-    </Card>
+    </div>
   );
 }
