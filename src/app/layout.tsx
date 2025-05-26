@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
-import { Patrick_Hand } from 'next/font/google';
+import { Indie_Flower } from 'next/font/google'; // Changed from Patrick_Hand
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import AppHeader from '@/components/AppHeader';
 import AppFooter from '@/components/AppFooter';
 
-const patrickHand = Patrick_Hand({
-  variable: '--font-patrick-hand',
+// Instantiate Indie Flower font
+const indieFlower = Indie_Flower({
+  variable: '--font-indie-flower', // New CSS variable
   subsets: ['latin'],
-  weight: ['400'], // Patrick Hand only has 400 weight
+  weight: ['400'], // Indie Flower also has 400 weight
 });
 
 export const metadata: Metadata = {
@@ -22,9 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${patrickHand.variable} h-full`}>
-      {/* Apply the font class directly to the body for global effect, variable to html */}
-      <body className={`${patrickHand.className} antialiased flex flex-col min-h-screen`}>
+    // Apply the font variable to html tag
+    <html lang="en" className={`${indieFlower.variable} h-full`}>
+      {/* Apply the font class directly to the body for global effect */}
+      <body className={`${indieFlower.className} antialiased flex flex-col min-h-screen`}>
         <AppHeader />
         <main className="flex-grow container mx-auto px-4 py-8">
           {children}

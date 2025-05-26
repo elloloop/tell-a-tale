@@ -4,8 +4,8 @@
 @tailwind utilities;
 
 /*
-  Global font (Patrick Hand) is applied via patrickHand.className on the body tag in layout.tsx.
-  The --font-patrick-hand CSS variable is made available via patrickHand.variable on the html tag in layout.tsx.
+  Global font (Indie Flower) is applied via indieFlower.className on the body tag in layout.tsx.
+  The --font-indie-flower CSS variable is made available via indieFlower.variable on the html tag in layout.tsx.
 */
 
 @layer base {
@@ -98,7 +98,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* font-family is applied by patrickHand.className in layout.tsx */
+    /* font-family is applied by indieFlower.className in layout.tsx */
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -117,19 +117,19 @@
       transparent 1px,
       transparent 2rem /* Adjust line height to be more spacious for handwritten font */
     );
-    font-family: var(--font-patrick-hand), cursive; /* Explicitly ensure handwritten font */
+    font-family: var(--font-indie-flower), cursive; /* Changed to Indie Flower */
     line-height: 2rem; /* Match background line height */
     background-attachment: local;
     border-color: hsl(var(--border));
-    /* Adjusted padding-top significantly to help text baseline align with the ruled lines.
-       This value might need further fine-tuning based on the visual result with Patrick Hand. */
-    padding-top: 0.7rem; /* Slightly increased padding-top to lower the text more */
+    /* Adjusted padding-top and font-size for Indie Flower.
+       These values might need further fine-tuning. */
+    padding-top: 0.6rem; 
+    font-size: 1.1rem; 
     /* Ensure some horizontal and bottom padding for aesthetics and to avoid text collision */
     padding-left: 0.5rem;
     padding-right: 0.5rem;
     padding-bottom: 0.5rem;
     color: hsl(var(--foreground)); /* Ensure text color is from theme */
-    font-size: 1.2rem; /* Slightly larger font for handwritten feel, can be adjusted */
   }
 
   .storybook-page-container {
