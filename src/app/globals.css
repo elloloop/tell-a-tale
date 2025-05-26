@@ -10,90 +10,90 @@
 
 @layer base {
   :root {
-    --background: 260 100% 97.1%; /* #F5F0FF - Very light, desaturated lavender */
-    --foreground: 270 30% 25%;   /* #3B2A50 - Dark muted purple for text */
+    --background: 40 60% 97%; /* Very light, warm off-white (like aged paper) */
+    --foreground: 30 30% 25%;   /* Dark, muted sepia/brown for text (like old ink) */
 
-    --card: 260 90% 95%;      /* Slightly more saturated/darker than background */
-    --card-foreground: 270 30% 25%;
+    --card: 40 50% 95%;      /* Slightly darker/warmer than background */
+    --card-foreground: var(--foreground);
 
-    --popover: 260 90% 95%;
-    --popover-foreground: 270 30% 25%;
+    --popover: 40 50% 95%;
+    --popover-foreground: var(--foreground);
 
-    --primary: 260 100% 86.1%;  /* #D0B8FF - Soft lavender */
-    --primary-foreground: 270 30% 25%; /* Dark text on light primary */
+    --primary: 35 60% 88%;  /* Muted, warm beige - noticeable but soft */
+    --primary-foreground: 30 40% 15%; /* Darker brown for contrast on primary */
 
-    --secondary: 220 80% 90%; /* Lighter, softer version of accent for secondary */
-    --secondary-foreground: 270 30% 25%;
+    --secondary: 30 40% 90%; /* Softer, lighter beige for secondary elements */
+    --secondary-foreground: var(--primary-foreground);
 
-    --muted: 260 60% 96%;     /* Muted lavender/gray */
-    --muted-foreground: 260 20% 50%; /* Darker muted gray */
+    --muted: 40 30% 94%;     /* Muted, very light gray-beige */
+    --muted-foreground: 30 20% 45%; /* Darker muted gray-brown */
 
-    --accent: 220 100% 86.1%;   /* #B8D0FF - Pale violet-blue */
-    --accent-foreground: 270 30% 25%; /* Dark text on light accent */
+    --accent: 25 50% 75%;   /* Muted terracotta/earthy orange - for a subtle accent */
+    --accent-foreground: 30 40% 15%; /* Dark text on accent */
 
-    --destructive: 0 70% 60%; /* Standard red for destructive actions */
+    --destructive: 0 60% 55%; /* A standard, slightly desaturated red */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 260 50% 92%;    /* Subtle border, darker than background */
-    --input: 260 100% 96%;    /* Light input background */
-    --ring: 220 100% 86.1%;   /* Accent color for ring */
+    --border: 30 30% 88%;    /* Subtle border, darker than background */
+    --input: 40 40% 96%;    /* Light input background */
+    --ring: 25 50% 75%;   /* Accent color for ring */
 
-    --chart-1: 260 80% 75%;
-    --chart-2: 220 80% 75%;
-    --chart-3: 260 60% 65%;
-    --chart-4: 220 60% 65%;
-    --chart-5: 240 70% 70%;
+    --chart-1: 25 60% 65%;
+    --chart-2: 35 70% 75%;
+    --chart-3: 25 40% 55%;
+    --chart-4: 35 50% 65%;
+    --chart-5: 30 45% 60%;
     --radius: 0.5rem;
 
     /* Sidebar specific colors - adjusted for new theme */
-    --sidebar-background: 260 100% 96%;
+    --sidebar-background: 40 55% 96%; /* Slightly distinct off-white */
     --sidebar-foreground: var(--foreground);
     --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: var(--primary-foreground);
     --sidebar-accent: var(--accent);
     --sidebar-accent-foreground: var(--accent-foreground);
-    --sidebar-border: 260 50% 90%;
+    --sidebar-border: 30 30% 85%;
     --sidebar-ring: var(--ring);
   }
 
   .dark {
-    --background: 260 20% 10%; /* Very dark desaturated purple */
-    --foreground: 260 80% 90%; /* Light lavender text */
+    --background: 30 15% 12%; /* Very dark, warm brown/gray */
+    --foreground: 40 40% 85%; /* Light, warm off-white text */
 
-    --card: 260 20% 15%;
-    --card-foreground: 260 80% 90%;
+    --card: 30 15% 18%;
+    --card-foreground: var(--foreground);
 
-    --popover: 260 20% 15%;
-    --popover-foreground: 260 80% 90%;
+    --popover: var(--card);
+    --popover-foreground: var(--foreground);
 
-    --primary: 260 70% 65%;   /* Darker, but still lavender */
-    --primary-foreground: 260 10% 5%; /* Very dark text for contrast */
+    --primary: 35 30% 45%;   /* Muted, dark warm beige */
+    --primary-foreground: 40 50% 90%; /* Light off-white text for contrast */
 
-    --secondary: 220 50% 55%; /* Darker violet-blue */
-    --secondary-foreground: 260 80% 90%;
+    --secondary: 30 20% 35%; /* Darker, softer warm brown */
+    --secondary-foreground: var(--foreground);
 
-    --muted: 260 15% 25%;
-    --muted-foreground: 260 40% 70%;
+    --muted: 30 10% 25%;
+    --muted-foreground: 40 30% 70%;
 
-    --accent: 220 70% 65%;    /* Darker pale violet-blue */
-    --accent-foreground: 260 10% 5%; /* Very dark text for contrast */
+    --accent: 25 40% 55%;    /* Darker, muted terracotta */
+    --accent-foreground: 40 50% 90%; 
 
-    --destructive: 0 60% 50%;
+    --destructive: 0 50% 45%;
     --destructive-foreground: 0 0% 95%;
 
-    --border: 260 15% 20%;
-    --input: 260 15% 18%;
-    --ring: 220 70% 65%;
+    --border: 30 10% 22%;
+    --input: 30 10% 20%;
+    --ring: var(--accent);
 
-    --chart-1: 260 80% 65%;
-    --chart-2: 220 80% 65%;
-    --chart-3: 260 60% 55%;
-    --chart-4: 220 60% 55%;
-    --chart-5: 240 70% 60%;
+    --chart-1: 25 50% 55%;
+    --chart-2: 35 60% 65%;
+    --chart-3: 25 30% 45%;
+    --chart-4: 35 40% 55%;
+    --chart-5: 30 35% 50%;
 
-    --sidebar-background: 260 18% 8%;
+    --sidebar-background: 30 13% 10%; /* Slightly darker than main dark bg */
     --sidebar-foreground: var(--foreground);
-    --sidebar-border: 260 15% 18%;
+    --sidebar-border: 30 10% 18%;
   }
 }
 
