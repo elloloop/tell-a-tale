@@ -3,8 +3,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ensure the body uses the font if the class method has any issues,
+   but patrickHand.className on body in layout.tsx should handle this.
+   Keeping var definition for explicit use elsewhere if needed. */
 body {
-  font-family: var(--font-patrick-hand), cursive; /* Updated font */
+  font-family: var(--font-patrick-hand), cursive;
 }
 
 @layer base {
@@ -115,13 +118,19 @@ body {
       transparent 1px,
       transparent 2rem /* Adjust line height to be more spacious for handwritten font */
     );
-    font-family: var(--font-patrick-hand), cursive; /* Ensure handwritten font */
+    font-family: var(--font-patrick-hand), cursive; /* Explicitly ensure handwritten font */
     line-height: 2rem; /* Match background line height */
     background-attachment: local;
     border-color: hsl(var(--border));
-    padding-top: 0.3rem; /* Fine-tune padding to align text with lines */
+    /* Adjusted padding-top significantly to help text baseline align with the ruled lines.
+       This value might need further fine-tuning based on the visual result with Patrick Hand. */
+    padding-top: 0.65rem; 
+    /* Ensure some horizontal and bottom padding for aesthetics and to avoid text collision */
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-bottom: 0.5rem;
     color: hsl(var(--foreground)); /* Ensure text color is from theme */
-    font-size: 1.125rem; /* Slightly larger font for handwritten feel */
+    font-size: 1.2rem; /* Slightly larger font for handwritten feel, can be adjusted */
   }
 
   .storybook-page-container {

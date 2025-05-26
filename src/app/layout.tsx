@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import { Patrick_Hand } from 'next/font/google'; // Changed font
+import { Patrick_Hand } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import AppHeader from '@/components/AppHeader';
 import AppFooter from '@/components/AppFooter';
 
-const patrickHand = Patrick_Hand({ // Changed font
-  variable: '--font-patrick-hand', // Changed font variable
+const patrickHand = Patrick_Hand({
+  variable: '--font-patrick-hand', // We'll keep the variable for direct use if needed
   subsets: ['latin'],
   weight: ['400'], // Patrick Hand only has 400 weight
 });
@@ -23,7 +23,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className={`${patrickHand.variable} antialiased flex flex-col min-h-screen`}> {/* Updated font variable */}
+      {/* Apply the font class directly to the body for global effect */}
+      <body className={`${patrickHand.className} antialiased flex flex-col min-h-screen`}>
         <AppHeader />
         <main className="flex-grow container mx-auto px-4 py-8">
           {children}
