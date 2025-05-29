@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -35,6 +35,7 @@ export default function StoryEditor({ currentTheme, currentImageSrc, storyPrompt
   const [showShareOptions, setShowShareOptions] = useState(false);
   const { toast } = useToast();
   const { username, isAuthenticated, signIn } = useUser();
+  const signatureInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Pre-fill the textarea with the storyPrompt when it's provided.
@@ -88,6 +89,11 @@ export default function StoryEditor({ currentTheme, currentImageSrc, storyPrompt
         title: 'Story Saved!',
         description: 'Add your signature to publish your story.',
       });
+
+      // Focus the signature input after a short delay to ensure the DOM has updated
+      setTimeout(() => {
+        signatureInputRef.current?.focus();
+      }, 100);
     } catch (error: any) {
       console.error('Error submitting story:', error);
       toast({
@@ -192,6 +198,16 @@ export default function StoryEditor({ currentTheme, currentImageSrc, storyPrompt
     setShowUsernameDialog(false);
   };
 
+  const handleSignatureKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSignatureSubmit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setIsStorySaved(false);
+    }
+  };
+
   return (
     <div className="w-full pt-4"> 
       <h2 className="text-xl font-semibold text-primary mb-3 text-center">
@@ -264,9 +280,11 @@ export default function StoryEditor({ currentTheme, currentImageSrc, storyPrompt
                   {!showShareOptions ? (
                     <div className="mt-2 flex gap-2">
                       <Input
+                        ref={signatureInputRef}
                         placeholder="Enter your pen name"
                         value={signature}
                         onChange={(e) => setSignature(e.target.value)}
+                        onKeyDown={handleSignatureKeyDown}
                         className="max-w-xs"
                       />
                       <Button
