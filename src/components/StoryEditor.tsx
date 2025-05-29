@@ -232,13 +232,6 @@ export default function StoryEditor({ currentTheme, currentImageSrc, storyPrompt
                 disabled={isLoading}
                 aria-label="Story composition text area"
               />
-              <Alert className="mt-4 bg-primary/10 border-primary/30">
-                <Info className="h-4 w-4 text-primary" />
-                <AlertTitle className="text-primary">Local Storage Notice</AlertTitle>
-                <AlertDescription className="text-primary-foreground/80">
-                  Your stories are saved locally in your browser&apos;s storage. When you publish, they will be visible to others.
-                </AlertDescription>
-              </Alert>
             </div>
             <div className="flex justify-between items-center mt-6">
               <Button
