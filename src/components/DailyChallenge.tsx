@@ -43,7 +43,8 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
 
       setChallengeTheme(currentTheme); // Set theme for display
       setLoadingStage("Crafting story prompts...");
-      // You may want to skip prompt generation if not needed
+      // Call onPromptsLoaded with hardcoded starting line
+      onPromptsLoaded('Once upon a time', currentTheme, currentImageSrc);
       setIsLoading(false);
     }
     fetchChallenge();
