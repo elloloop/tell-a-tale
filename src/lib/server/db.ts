@@ -1,53 +1,54 @@
-import { initializeApp, getApps } from "firebase/app";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  orderBy,
-  where,
-} from "firebase/firestore";
+import { initializeApp, getApps, cert } from "firebase-admin/app";
+import { getFirestore, DocumentData } from "firebase-admin/firestore";
 import type { Story } from "@/lib/types";
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-};
+// Initialize Firebase Admin for server-side operations
+const apps = getApps();
+const app =
+  apps.length === 0
+    ? initializeApp({
+        credential: cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+        }),
+      })
+    : apps[0];
 
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
 export async function saveStoryToDb(story: Story) {
-  const docRef = await addDoc(collection(db, "stories"), story);
+  const docRef = await db.collection("stories").add(story);
   return docRef.id;
 }
 
 export async function fetchAllStories() {
-  const q = query(collection(db, "stories"), orderBy("createdAt", "desc"));
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const storiesQuery = db.collection("stories").orderBy("createdAt", "desc");
+  const querySnapshot = await storiesQuery.get();
+  return querySnapshot.docs.map((doc: DocumentData) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 }
 
 // New function to check if a username is already taken
 export async function isUsernameTaken(username: string): Promise<boolean> {
-  const q = query(collection(db, "users"), where("username", "==", username));
-  const querySnapshot = await getDocs(q);
+  const querySnapshot = await db
+    .collection("users")
+    .where("username", "==", username)
+    .get();
   return !querySnapshot.empty;
 }
 
 // New function to fetch stories by username
 export async function fetchStoriesByUsername(username: string) {
-  const q = query(
-    collection(db, "stories"),
-    where("username", "==", username),
-    orderBy("createdAt", "desc")
-  );
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const querySnapshot = await db
+    .collection("stories")
+    .where("username", "==", username)
+    .orderBy("createdAt", "desc")
+    .get();
+  return querySnapshot.docs.map((doc: DocumentData) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 }
