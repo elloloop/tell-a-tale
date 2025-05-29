@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BookOpenText, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { UserProfileButton } from '@/components/UserProfileButton';
 
 export default function AppHeader() {
   return (
@@ -10,6 +11,7 @@ export default function AppHeader() {
           Tell-a-Tale
         </Link>
         <nav className="flex items-center gap-2 sm:gap-4">
+          <UserProfileButton />
           <Button variant="ghost" asChild>
             <Link href="/" className="flex items-center gap-2">
               <Home className="h-5 w-5" />

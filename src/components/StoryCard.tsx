@@ -21,6 +21,11 @@ export default function StoryCard({ story, onUpdateReactions }: StoryCardProps) 
           {story.title || `A Tale from ${new Date(story.createdAt).toLocaleDateString()}`}
         </CardTitle>
         <div className="text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 mt-1">
+          {story.username && (
+            <span className="text-primary-foreground bg-primary/10 px-2 py-0.5 rounded-full font-medium">
+              @{story.username}
+            </span>
+          )}
           <span className="flex items-center gap-1">
             <CalendarDays className="h-3 w-3" />
             {formatDistanceToNow(new Date(story.createdAt), { addSuffix: true })}
@@ -37,8 +42,9 @@ export default function StoryCard({ story, onUpdateReactions }: StoryCardProps) 
             <Image 
               src={story.dailyImageSrc} 
               alt={`Inspiration for ${story.title}`} 
-              layout="fill"
-              objectFit="cover"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              style={{ objectFit: 'cover' }}
               className="bg-muted"
             />
           </div>

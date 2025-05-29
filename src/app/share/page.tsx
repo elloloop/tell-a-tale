@@ -114,8 +114,9 @@ function SharePageContent() {
             <Image
               src={sharedPayload.dailyImageSrc}
               alt={sharedPayload.dailyImageHint}
-              layout="fill"
-              objectFit="cover"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              style={{ objectFit: 'cover' }}
               data-ai-hint={sharedPayload.dailyImageHint}
               priority
             />

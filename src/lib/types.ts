@@ -6,6 +6,8 @@ export interface Story {
   title?: string; // Optional title, could be first few words
   dailyImageSrc: string; // Store which image it was based on
   theme: string; // Store the theme
+  username?: string; // Author's username
+  userId?: string; // Optional Firebase user ID for authenticated users
 }
 
 export interface DailyChallengeData {

@@ -106,9 +106,10 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
           <Image
             key={displayImageSrc} 
             src={displayImageSrc}
-            alt={dailyImageHint} // Use the hint for alt text
-            layout="fill"
-            objectFit="cover" 
+            alt={dailyImageHint}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            style={{ objectFit: 'cover' }}
             data-ai-hint={dailyImageHint}
             priority 
             className="transform transition-transform duration-500 hover:scale-105"

@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import AppHeader from '@/components/AppHeader';
 import AppFooter from '@/components/AppFooter';
+import { UserProvider } from '@/providers/user-provider';
 
 // Instantiate Indie Flower font
 const indieFlower = Indie_Flower({
@@ -27,12 +28,14 @@ export default function RootLayout({
     <html lang="en" className={`${indieFlower.variable} h-full`}>
       {/* Apply the font class directly to the body for global effect */}
       <body className={`${indieFlower.className} antialiased flex flex-col min-h-screen`}>
-        <AppHeader />
-        <main className="flex-grow container mx-auto px-4 py-8">
-          {children}
-        </main>
-        <AppFooter />
-        <Toaster />
+        <UserProvider>
+          <AppHeader />
+          <main className="flex-grow container mx-auto px-4 py-8">
+            {children}
+          </main>
+          <AppFooter />
+          <Toaster />
+        </UserProvider>
       </body>
     </html>
   );
