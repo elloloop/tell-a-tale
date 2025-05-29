@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, BookOpen } from 'lucide-react';
 import { ClientOnly } from '@/components/ClientOnly';
+import { findLatestAvailableImageUrl } from '@/lib/utils';
 
 export default function StoriesPage() {
   const [localStories, setLocalStories] = useLocalStorage<Story[]>('tell-a-tale-stories', []);
@@ -26,6 +27,11 @@ export default function StoriesPage() {
       )
     );
   };
+
+  // Get today's date in YYYY-MM-DD
+  const today = new Date().toISOString().slice(0, 10);
+  const staticImage = findLatestAvailableImageUrl(today);
+  // Use staticImage as needed in your page
 
   return (
     <ClientOnly fallback={<LoadingState />}>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -6,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles, Loader2, Image as ImageIcon } from 'lucide-react';
-import { generatePrompts, generateImageForChallenge } from '@/app/actions';
+import { findLatestAvailableImageUrl } from '@/lib/utils';
 
 const FALLBACK_IMAGE_SRC = "https://placehold.co/800x450/f0f0f0/aaaaaa.png";
 
@@ -31,39 +30,24 @@ export default function DailyChallenge({ onPromptsLoaded }: DailyChallengeProps)
       let currentImageSrc = FALLBACK_IMAGE_SRC;
       let currentTheme = defaultTheme;
 
-      try {
-        setLoadingStage("Generating unique image...");
-        const imageResult = await generateImageForChallenge({ hint: dailyImageHint });
-
-        if ('error' in imageResult || !imageResult.imageDataUri) {
-          setError(`Image generation failed: ${('error'in imageResult && imageResult.error) || 'Unknown error'}. Using fallback.`);
-        } else {
-          currentImageSrc = imageResult.imageDataUri;
-          setDisplayImageSrc(currentImageSrc);
-        }
-
-        setChallengeTheme(currentTheme); // Set theme for display
-
-        setLoadingStage("Crafting story prompts...");
-        const promptsResult = await generatePrompts({ imageDataUri: currentImageSrc, theme: currentTheme });
-
-        if ('error' in promptsResult) {
-          setError(promptsResult.error);
-        } else if (promptsResult.startingLine && typeof promptsResult.startingLine === 'string' && promptsResult.startingLine.trim() !== '') {
-          onPromptsLoaded(promptsResult.startingLine, currentTheme, currentImageSrc);
-        } else {
-           setError("Received no starting line or an invalid line from AI.");
-        }
-      } catch (e: any) {
-        console.error("Failed to fetch daily challenge:", e);
-        setError(e.message || "Failed to load daily challenge. Please try again.");
-      } finally {
-        setIsLoading(false);
-        setLoadingStage("");
+      // Get today's date in YYYY-MM-DD
+      const today = new Date().toISOString().slice(0, 10);
+      const staticImage = await findLatestAvailableImageUrl(today);
+      if (staticImage) {
+        currentImageSrc = staticImage;
+        setDisplayImageSrc(currentImageSrc);
+      } else {
+        setError('No static image found for today.');
+        setDisplayImageSrc(FALLBACK_IMAGE_SRC);
       }
+
+      setChallengeTheme(currentTheme); // Set theme for display
+      setLoadingStage("Crafting story prompts...");
+      // You may want to skip prompt generation if not needed
+      setIsLoading(false);
     }
     fetchChallenge();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isLoading) {
