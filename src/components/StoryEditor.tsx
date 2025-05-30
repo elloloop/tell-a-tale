@@ -76,7 +76,7 @@ export default function StoryEditor({ currentTheme, currentImageSrc, storyPrompt
         reactions: {},
         theme: currentTheme,
         dailyImageSrc: currentImageSrc,
-        title: storyText.substring(0, 50) + (storyText.length > 50 ? '...' : ''),
+        title: storyText.length > 50 ? `${storyText.substring(0, 47)}...` : storyText,
         username: username,
       };
 
@@ -121,10 +121,26 @@ export default function StoryEditor({ currentTheme, currentImageSrc, storyPrompt
     try {
       setIsSubmitting(true);
       
+      // Validate required fields before submission
+      if (!pendingStory.text || !pendingStory.dailyImageSrc || !pendingStory.theme) {
+        throw new Error('Missing required story fields');
+      }
+      
       const storyToPublish: Story = {
         ...pendingStory,
         username: signature,
+        text: pendingStory.text.trim(),
+        dailyImageSrc: pendingStory.dailyImageSrc.trim(),
+        theme: pendingStory.theme.trim(),
       };
+      
+      console.log('Submitting story:', {
+        id: storyToPublish.id,
+        textLength: storyToPublish.text.length,
+        hasImage: !!storyToPublish.dailyImageSrc,
+        hasTheme: !!storyToPublish.theme,
+        username: storyToPublish.username
+      });
       
       const result = await submitStoryToServer(storyToPublish);
       
@@ -150,9 +166,10 @@ export default function StoryEditor({ currentTheme, currentImageSrc, storyPrompt
         });
       }
     } catch (error: any) {
+      console.error('Error publishing story:', error);
       toast({
         title: 'Publishing Error',
-        description: error.message || 'An unexpected error occurred.',
+        description: error.message || 'An unexpected error occurred while publishing your story.',
         variant: 'destructive',
       });
     } finally {

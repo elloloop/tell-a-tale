@@ -18,8 +18,60 @@ const app =
 export const db = getFirestore(app);
 
 export async function saveStoryToDb(story: Story) {
-  const docRef = await db.collection("stories").add(story);
-  return docRef.id;
+  try {
+    // Create a batch write
+    const batch = db.batch();
+
+    // Create a new document reference
+    const docRef = db.collection("stories").doc();
+
+    // Prepare the data with explicit type conversions and sanitization
+    const storyData = {
+      text: story.text ? story.text.slice(0, 1000000) : "",
+      createdAt:
+        typeof story.createdAt === "number" ? story.createdAt : Date.now(),
+      reactions: story.reactions
+        ? Object.fromEntries(
+            Object.entries(story.reactions).map(([k, v]) => [k, Number(v)])
+          )
+        : {},
+      title: story.title ? story.title.slice(0, 1000) : "",
+      dailyImageSrc: story.dailyImageSrc || "",
+      theme: story.theme || "",
+      username: story.username || "",
+    };
+
+    // Log the sanitized data
+    console.log("Saving story data:", {
+      textLength: storyData.text.length,
+      createdAt: storyData.createdAt,
+      reactionsCount: Object.keys(storyData.reactions).length,
+      titleLength: storyData.title.length,
+      hasImage: !!storyData.dailyImageSrc,
+      hasTheme: !!storyData.theme,
+      hasUsername: !!storyData.username,
+    });
+
+    // Add the document to the batch
+    batch.set(docRef, storyData);
+
+    // Commit the batch
+    await batch.commit();
+
+    return docRef.id;
+  } catch (error) {
+    console.error("Error saving story to database:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      storyId: story.id,
+      textLength: story.text?.length,
+    });
+    throw new Error(
+      `Failed to save story to database: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
 }
 
 export async function fetchAllStories() {
