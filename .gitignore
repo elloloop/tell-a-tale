@@ -12,6 +12,10 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
+/.swc
+/playwright/.cache
 
 # next.js
 /.next/
@@ -19,9 +23,11 @@
 
 # production
 /build
+/dist
 
 # local env files
 .env*.local
+.env
 
 # Server-side API routes (deprecated)
 /src/app/api/
@@ -29,6 +35,12 @@
 # misc
 .DS_Store
 *.pem
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
 
 # debug
 npm-debug.log*
@@ -42,6 +54,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+tsconfig.tsbuildinfo
 
 .genkit/*
 
@@ -50,3 +63,12 @@ firebase-debug.log
 firestore-debug.log
 .firebase/
 ui-debug.log
+
+# cache
+.cache/
+.eslintcache
+
+# Local development
+.env.development.local
+.env.test.local
+.env.production.local

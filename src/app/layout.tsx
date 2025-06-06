@@ -3,6 +3,7 @@ import { Inter, Caveat } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { Providers } from './providers';
 
 // Use Inter font for general text
 const inter = Inter({
@@ -29,11 +30,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${caveat.variable}`}>
       <body className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-grow container mx-auto px-4 py-8">
-          {children}
-        </main>
-        <Footer />
+        <Providers>
+          <Header />
+          <main className="flex-grow container mx-auto px-4 py-8">
+            {children}
+          </main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

@@ -1,3 +1,7 @@
+# Agents
+
+**Note: Do NOT use Babel in this project. All builds and tests must use SWC or native Next.js tooling. Remove any Babel configs if found.**
+
 # Agent Development Guidelines
 
 To ensure high-quality, maintainable, and collaborative development, all agents working in this repository must follow these practices:
