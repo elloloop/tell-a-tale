@@ -46,3 +46,4 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ELLOLOOP_TELL_A_TALE }}
           channelId: live
           projectId: elloloop-tell-a-tale
+          target: penloop
