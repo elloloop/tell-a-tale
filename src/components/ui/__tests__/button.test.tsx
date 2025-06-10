@@ -5,12 +5,12 @@ import { Button } from '../button';
 
 // Mock the cn function to avoid issues with tailwind classes
 jest.mock('@/lib/utils', () => ({
-  cn: (...inputs: any[]) => inputs.join(' '),
+  cn: (...inputs: unknown[]) => inputs.join(' '),
 }));
 
 // Mock Slot component from radix-ui
 jest.mock('@radix-ui/react-slot', () => ({
-  Slot: ({ children, ...props }: any) => React.cloneElement(children, props),
+  Slot: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => React.cloneElement(children as React.ReactElement, props),
 }));
 
 describe('Button Component', () => {

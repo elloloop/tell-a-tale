@@ -1,4 +1,5 @@
-import { logger } from "../logger";
+// Note: We're importing the type but not using the actual logger since we're using isolateModules
+import type { logger as LoggerType } from "../logger";
 
 describe("Logger", () => {
   // Store the original console methods and NODE_ENV
@@ -28,13 +29,14 @@ describe("Logger", () => {
   });
 
   describe("in development environment", () => {
-    let devLogger: any;
+    let devLogger: typeof LoggerType;
 
     beforeEach(() => {
       // Set NODE_ENV and get a fresh instance of the logger
       process.env.NODE_ENV = "development";
       jest.isolateModules(() => {
-        devLogger = require("../logger").logger;
+        // Using dynamic import for isolated modules
+        devLogger = jest.requireActual("../logger").logger;
       });
     });
 
@@ -61,13 +63,14 @@ describe("Logger", () => {
   });
 
   describe("in production environment", () => {
-    let prodLogger: any;
+    let prodLogger: typeof LoggerType;
 
     beforeEach(() => {
       // Set NODE_ENV and get a fresh instance of the logger
       process.env.NODE_ENV = "production";
       jest.isolateModules(() => {
-        prodLogger = require("../logger").logger;
+        // Using dynamic import for isolated modules
+        prodLogger = jest.requireActual("../logger").logger;
       });
     });
 

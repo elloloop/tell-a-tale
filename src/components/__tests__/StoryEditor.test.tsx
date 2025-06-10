@@ -103,7 +103,8 @@ describe('StoryEditor Integration', () => {
     });
     const image = screen.getByTestId('story-image');
     expect(image).toBeInTheDocument();
-    expect(image).toHaveAttribute('src', `https://picsum.photos/800/400?date=${today}`);
+    // Next.js Image component transforms the URL, so we just check that it contains our expected URL
+    expect(image.getAttribute('src')).toContain(encodeURIComponent(`https://picsum.photos/800/400?date=${today}`));
   });
 
   it('should show text input when no story exists', () => {
@@ -227,18 +228,28 @@ describe('StoryEditor Integration', () => {
   });
 
   it('should handle image errors', async () => {
+    // Mock console.error to prevent Next.js Image warnings in tests
+    const originalConsoleError = console.error;
+    console.error = jest.fn();
+    
+    // For the image error test, we'll test the error state directly instead of using an invalid URL
+    // since Next.js Image component validates URLs
     renderWithRedux(<StoryEditor />, { 
       isLoading: false,
-      imageUrl: 'invalid-url.jpg'
+      imageUrl: 'https://example.com/valid-looking-but-will-fail.jpg'
     });
     
+    // Trigger the error on the image component which has the onError handler attached
     const image = screen.getByTestId('story-image');
+    fireEvent.error(image); // This will trigger the error handler on the image
     
-    // Simulate image error
-    fireEvent.error(image);
+    // Check for error message
+    await waitFor(() => {
+      expect(screen.getByText('Failed to load image')).toBeInTheDocument();
+    });
     
-    // Should show error message
-    expect(screen.getByText('Failed to load image')).toBeInTheDocument();
+    // Restore console.error
+    console.error = originalConsoleError;
   });
 
   it('should handle error during initial state loading', async () => {

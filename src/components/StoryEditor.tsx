@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import Image from 'next/image';
 import { setStory, setImageUrl, setLoading } from '@/store/storySlice';
 import { RootState } from '@/store/store';
 import { logger } from '@/lib/logger';
@@ -95,7 +96,7 @@ export default function StoryEditor({ className = '', skipInit = false }: StoryE
   }
 
   return (
-    <div className={`max-w-2xl mx-auto p-4 ${className}`}>
+    <div className={`max-w-2xl mx-auto p-4 ${className}`} data-testid="story-editor">
       <div className="relative">
         {imageLoading && (
           <div className="w-full h-64 bg-gray-200 animate-pulse rounded-lg" />
@@ -105,15 +106,18 @@ export default function StoryEditor({ className = '', skipInit = false }: StoryE
             <p className="text-gray-500">Failed to load image</p>
           </div>
         ) : (
-          <img
-            src={imageUrl}
-            alt="Image of the day"
-            className="w-full h-64 object-cover rounded-lg shadow-lg"
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-            style={{ display: imageLoading ? 'none' : 'block' }}
-            data-testid="story-image"
-          />
+          <div className="relative w-full h-64">
+            <Image
+              src={imageUrl}
+              alt="Image of the day"
+              fill
+              className="object-cover rounded-lg shadow-lg"
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              style={{ display: imageLoading ? 'none' : 'block' }}
+              data-testid="story-image"
+            />
+          </div>
         )}
       </div>
 

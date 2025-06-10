@@ -2,7 +2,7 @@ import { cn } from "../utils";
 
 // Mock the dependencies
 jest.mock("clsx", () => ({
-  clsx: (...args: any[]) => args.join(" "),
+  clsx: (...args: unknown[]) => args.join(" "),
 }));
 
 jest.mock("tailwind-merge", () => ({
