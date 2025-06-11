@@ -13,14 +13,11 @@ interface StoryEditorProps {
   skipInit?: boolean; // for testing only
 }
 
-export default function StoryEditor({ className = '', skipInit = false }: StoryEditorProps) {
-  const dispatch = useDispatch();
-  const { story, imageUrl, isLoading } = useSelector((state: RootState) => state.story);
-  const [draft, setDraft] = useState('');
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-
+const useInitialStory = (
+  skipInit: boolean,
+  dispatch: ReturnType<typeof useDispatch>,
+  setDraft: (v: string) => void
+) => {
   useEffect(() => {
     if (skipInit) return;
 
@@ -44,14 +41,25 @@ export default function StoryEditor({ className = '', skipInit = false }: StoryE
     };
 
     loadInitialState();
-  }, [dispatch, skipInit]);
+  }, [dispatch, skipInit, setDraft]);
+};
 
+const useStorySync = (story: string | null, setDraft: (v: string) => void) => {
   useEffect(() => {
-    // Update draft when story changes in Redux store
-    if (story) {
-      setDraft(story);
-    }
-  }, [story]);
+    if (story) setDraft(story);
+  }, [story, setDraft]);
+};
+
+export default function StoryEditor({ className = '', skipInit = false }: StoryEditorProps) {
+  const dispatch = useDispatch();
+  const { story, imageUrl, isLoading } = useSelector((state: RootState) => state.story);
+  const [draft, setDraft] = useState('');
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  useInitialStory(skipInit, dispatch, setDraft);
+  useStorySync(story, setDraft);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,12 +72,9 @@ export default function StoryEditor({ className = '', skipInit = false }: StoryE
     }
   };
 
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
-
+  const handleEdit = () => setIsEditing(true);
   const handleCancel = () => {
-    setDraft(story);
+    setDraft(story ?? '');
     setIsEditing(false);
   };
 
@@ -90,7 +95,9 @@ export default function StoryEditor({ className = '', skipInit = false }: StoryE
           <div className="w-full h-64 bg-gray-200 rounded-lg mb-4" />
           <div className="w-full h-32 bg-gray-200 rounded-lg" />
         </div>
-        <div className="text-center mt-4" data-testid="loading-text">Loading...</div>
+        <div className="text-center mt-4" data-testid="loading-text">
+          Loading...
+        </div>
       </div>
     );
   }
@@ -98,9 +105,7 @@ export default function StoryEditor({ className = '', skipInit = false }: StoryE
   return (
     <div className={`max-w-2xl mx-auto p-4 ${className}`} data-testid="story-editor">
       <div className="relative">
-        {imageLoading && (
-          <div className="w-full h-64 bg-gray-200 animate-pulse rounded-lg" />
-        )}
+        {imageLoading && <div className="w-full h-64 bg-gray-200 animate-pulse rounded-lg" />}
         {imageError ? (
           <div className="w-full h-64 bg-gray-100 flex items-center justify-center rounded-lg">
             <p className="text-gray-500">Failed to load image</p>
@@ -124,7 +129,9 @@ export default function StoryEditor({ className = '', skipInit = false }: StoryE
       {story && !isEditing ? (
         <div className="mt-4">
           <div className="p-4 bg-white rounded-lg shadow">
-            <p className="text-gray-800" data-testid="story-content">{story}</p>
+            <p className="text-gray-800" data-testid="story-content">
+              {story}
+            </p>
           </div>
           <button
             onClick={handleEdit}
@@ -138,7 +145,7 @@ export default function StoryEditor({ className = '', skipInit = false }: StoryE
         <form onSubmit={handleSubmit} className="mt-4">
           <textarea
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={e => setDraft(e.target.value)}
             placeholder="Write your story..."
             className="w-full p-4 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={4}

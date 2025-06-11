@@ -68,6 +68,12 @@ ui-debug.log
 .cache/
 .eslintcache
 
+# CI simulation scripts
+/scripts/run-ci-local.sh
+/scripts/run-unit-tests.sh
+/scripts/simulate-github-actions.sh
+/scripts/test-story-editor.sh
+
 # Local development
 .env.development.local
 .env.test.local
