@@ -150,23 +150,6 @@ npm run ci-local
 
 This will run all the checks in the same order as the CI pipeline, helping you catch issues before pushing your code.
 
-#### Advanced CI Simulation Scripts
-
-For more granular control over CI testing, you can use these additional scripts (they're added to `.gitignore` and are meant for local development only):
-
-```bash
-# Run only unit tests in CI mode
-npm run test:ci
-
-# Run tests with GitHub Actions environment variables set
-npm run test:github-actions
-
-# Run only StoryEditor component tests in CI mode
-npm run test:story-editor
-```
-
-For more details about these scripts and how they simulate CI environments, see the documentation in `docs/ci-simulation.md`.
-
 These hooks and tools ensure that code quality is maintained and prevent pushing code that doesn't pass the CI pipeline checks.
 
 ## Learn More

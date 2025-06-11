@@ -21,13 +21,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
-    "prepare": "husky",
-    "check-node": "./scripts/check-node-version.sh",
-    "# Local CI simulation scripts (not committed to repo)": "",
-    "ci-local": "./scripts/run-ci-local.sh",
-    "test:ci": "./scripts/run-unit-tests.sh",
-    "test:github-actions": "./scripts/simulate-github-actions.sh",
-    "test:story-editor": "./scripts/test-story-editor.sh"
+    "prepare": "husky"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",

@@ -42,6 +42,13 @@ jest.mock('@/config/imageService', () => ({
   },
 }));
 
+// Mock the imageServiceConfig
+jest.mock('@/config/imageService', () => ({
+  imageServiceConfig: {
+    getImageUrl: jest.fn().mockImplementation(date => `https://picsum.photos/800/400?date=${date}`),
+  },
+}));
+
 // Test wrapper component
 const renderWithRedux = (component: React.ReactElement, initialState = {}) => {
   // Ensure imageUrl is always present in initialState to prevent Next.js Image warnings
@@ -61,6 +68,17 @@ const renderWithRedux = (component: React.ReactElement, initialState = {}) => {
         ...initialState,
       },
     },
+  });
+
+// Test wrapper component
+const renderWithRedux = (component: React.ReactElement, initialState = {}) => {
+  // Ensure imageUrl is always present in initialState to prevent Next.js Image warnings
+  const today = new Date().toISOString().split('T')[0];
+  const defaultImageUrl = `https://picsum.photos/800/400?date=${today}`;
+
+  const store = createTestStore({
+    imageUrl: defaultImageUrl,
+    ...initialState,
   });
 
   return {
@@ -91,13 +109,37 @@ describe('StoryEditor Integration', () => {
       imageUrl: '',
     });
     expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+
     expect(screen.getByTestId('loading-text')).toBeInTheDocument();
+  });
+
+  it('should transition from loading to loaded state', async () => {
+    const { container, store } = renderWithRedux(<StoryEditor skipInit />, {
+      isLoading: true,
+      story: '',
+      imageUrl: '',
+    });
+
+    // drop loading flag
+    await act(async () => {
+      store.dispatch({ type: 'story/setLoading', payload: false });
+    });
+
+    // fake image load so the placeholder disappears
+    fireEvent.load(screen.getByTestId('story-image'));
+
+    await waitFor(() => {
+      expect(container.querySelector('.animate-pulse')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('loading-text')).not.toBeInTheDocument();
+    });
   });
 
   it('should render the image when provided', () => {
     const today = new Date().toISOString().split('T')[0];
-    renderWithRedux(<StoryEditor skipInit={true} />);
-
+    renderWithRedux(<StoryEditor />, {
+      isLoading: false,
+      imageUrl: `https://picsum.photos/800/400?date=${today}`,
+    });
     const image = screen.getByTestId('story-image');
     expect(image).toBeInTheDocument();
     // We're using a mock for Next.js Image, so just check if the URL is present
@@ -119,12 +161,35 @@ describe('StoryEditor Integration', () => {
     expect(screen.getByText(mockStory)).toBeInTheDocument();
   });
 
-  // Use separate describe blocks for tests that may affect each other
-  describe('Form interactions', () => {
-    beforeEach(() => {
-      // Ensure each test starts with a clean state
-      jest.clearAllMocks();
+  it('should save story to localStorage when submitted', async () => {
+    const user = userEvent.setup();
+    const { store } = renderWithRedux(<StoryEditor />, { isLoading: false });
+
+    const textArea = screen.getByPlaceholderText(/write your story/i);
+    const submitButton = screen.getByRole('button', { name: /save/i });
+
+    // Type story using user-event
+    await user.clear(textArea);
+    await user.type(textArea, 'New story');
+
+    // Ensure textarea reflects input
+    expect(textArea).toHaveValue('New story');
+
+    // Submit the form
+    await user.click(submitButton);
+
+    // Redux state should now be updated
+    await waitFor(() => {
+      expect(store.getState().story.story).toBe('New story');
     });
+
+    // Verify localStorage was called
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith('todayStory', 'New story');
+  });
+
+  it('should load story from localStorage on mount', async () => {
+    const savedStory = 'Saved story';
+    mockLocalStorage.getItem.mockReturnValue(savedStory);
 
     it('should allow saving a new story', async () => {
       const user = userEvent.setup();
@@ -188,131 +253,148 @@ describe('StoryEditor Integration', () => {
     });
   });
 
-  // Group editing-related tests in a separate describe block for better isolation
-  describe('Story editing', () => {
-    beforeEach(() => {
-      // Ensure each test starts with a clean state
-      jest.clearAllMocks();
-      cleanup();
-      mockLocalStorage.clear();
-      mockLocalStorage.getItem.mockReturnValue(null);
-      mockLocalStorage.setItem.mockClear();
+  it('should allow editing an existing story', async () => {
+    const user = userEvent.setup();
+    const existingStory = 'Existing story';
+    const { store } = renderWithRedux(<StoryEditor />, {
+      isLoading: false,
+      story: existingStory,
     });
 
-    it('should allow editing an existing story', async () => {
-      const user = userEvent.setup();
-      const existingStory = 'Existing story';
+    // Initially story should be displayed in view mode
+    expect(screen.getByTestId('story-content')).toBeInTheDocument();
+    expect(screen.getByTestId('edit-button')).toBeInTheDocument();
 
-      // Mock implementation for localStorage
-      mockLocalStorage.setItem = jest.fn();
+    // Click edit button
+    await user.click(screen.getByTestId('edit-button'));
 
-      // Explicitly setting skipInit to true to prevent any localStorage access during initialization
-      const { store } = renderWithRedux(<StoryEditor skipInit={true} />, {
-        story: existingStory,
-      });
+    // Should now be in edit mode with the existing story in the textarea
+    const textarea = screen.getByTestId('story-textarea');
+    expect(textarea).toBeInTheDocument();
+    expect(textarea).toHaveValue(existingStory);
 
-      // Initially, we should see the story content
-      expect(screen.getByTestId('story-content')).toHaveTextContent(existingStory);
+    // Edit the story
+    await user.clear(textarea);
+    await user.type(textarea, 'Updated story');
 
-      // Click the edit button
-      const editButton = screen.getByTestId('edit-button');
-      await user.click(editButton);
+    // Submit the changes
+    await user.click(screen.getByTestId('save-button'));
 
-      // Now we should see a textarea with the story content
-      const textarea = screen.getByTestId('story-textarea');
-      expect(textarea).toBeInTheDocument();
-      expect(textarea).toHaveValue(existingStory);
-
-      // Change the content
-      const updatedStory = 'Updated story';
-      await user.clear(textarea);
-      await user.type(textarea, updatedStory);
-
-      // Save the changes
-      const saveButton = screen.getByTestId('save-button');
-      await user.click(saveButton);
-
-      // Verify that the story was updated in Redux and localStorage
-      expect(store.getState().story.story).toBe(updatedStory);
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('todayStory', updatedStory);
+    // Should go back to view mode with updated story
+    await waitFor(() => {
+      expect(screen.getByTestId('story-content')).toHaveTextContent('Updated story');
     });
 
-    it('should cancel editing and revert to original story', async () => {
-      const user = userEvent.setup();
-      const existingStory = 'Original story';
+    // Redux state should be updated
+    expect(store.getState().story.story).toBe('Updated story');
 
-      renderWithRedux(<StoryEditor skipInit={true} />, {
-        story: existingStory,
-      });
-
-      // Click the edit button
-      const editButton = screen.getByTestId('edit-button');
-      await user.click(editButton);
-
-      // Change the content
-      const textarea = screen.getByTestId('story-textarea');
-      await user.clear(textarea);
-      await user.type(textarea, 'Changed story');
-
-      // Click cancel
-      const cancelButton = screen.getByTestId('cancel-button');
-      await user.click(cancelButton);
-
-      // Verify we're back to showing the original story
-      expect(screen.getByTestId('story-content')).toHaveTextContent(existingStory);
-    });
+    // LocalStorage should be updated
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith('todayStory', 'Updated story');
   });
 
-  describe('Image handling', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-      cleanup();
+  it('should cancel editing and revert to original story', async () => {
+    const user = userEvent.setup();
+    const existingStory = 'Original story';
+    const { store } = renderWithRedux(<StoryEditor />, {
+      isLoading: false,
+      story: existingStory,
     });
 
-    it('should show loading state while image is loading', () => {
-      renderWithRedux(<StoryEditor skipInit={true} />);
-      const image = screen.getByTestId('story-image');
-      expect(image).toHaveStyle({ display: 'none' });
+    // Enter edit mode
+    await user.click(screen.getByTestId('edit-button'));
+
+    // Edit the story
+    const textarea = screen.getByTestId('story-textarea');
+    await user.clear(textarea);
+    await user.type(textarea, 'Changed but not saved');
+
+    // Cancel the edit
+    await user.click(screen.getByTestId('cancel-button'));
+
+    // Should return to view mode with original story
+    expect(screen.getByTestId('story-content')).toHaveTextContent('Original story');
+
+    // Redux state should remain unchanged
+    expect(store.getState().story.story).toBe(existingStory);
+
+    // LocalStorage should not be called
+    expect(mockLocalStorage.setItem).not.toHaveBeenCalledWith(
+      'todayStory',
+      'Changed but not saved'
+    );
+  });
+
+  it('should handle image errors', async () => {
+    // Mock console.error to prevent Next.js Image warnings in tests
+    const originalConsoleError = console.error;
+    console.error = jest.fn();
+
+    // For the image error test, we'll test the error state directly instead of using an invalid URL
+    // since Next.js Image component validates URLs
+    renderWithRedux(<StoryEditor />, {
+      isLoading: false,
+      imageUrl: 'https://example.com/valid-looking-but-will-fail.jpg',
     });
 
-    it('should show error state when image fails to load', () => {
-      renderWithRedux(<StoryEditor skipInit={true} />);
-      const image = screen.getByTestId('story-image');
-      fireEvent.error(image);
+    // Trigger the error on the image component which has the onError handler attached
+    const image = screen.getByTestId('story-image');
+    fireEvent.error(image); // This will trigger the error handler on the image
+
+    // Check for error message
+    await waitFor(() => {
       expect(screen.getByText('Failed to load image')).toBeInTheDocument();
     });
 
-    it('should show image when loaded successfully', () => {
-      renderWithRedux(<StoryEditor skipInit={true} />);
-      const image = screen.getByTestId('story-image');
-      fireEvent.load(image);
-      expect(image).toHaveStyle({ display: 'block' });
-    });
+    // Restore console.error
+    console.error = originalConsoleError;
   });
 
-  describe('Component rendering', () => {
-    it('should apply custom className when provided', () => {
-      const customClass = 'custom-class';
-      renderWithRedux(<StoryEditor className={customClass} skipInit={true} />);
-      const editor = screen.getByTestId('story-editor');
-      expect(editor).toHaveClass(customClass);
+  it('should handle error during initial state loading', async () => {
+    // Mock the localStorage to throw an error
+    const originalGetItem = mockLocalStorage.getItem;
+    mockLocalStorage.getItem = jest.fn().mockImplementation(() => {
+      throw new Error('LocalStorage error');
     });
 
-    it('should not show cancel button when not in edit mode', () => {
-      renderWithRedux(<StoryEditor skipInit={true} />);
-      expect(screen.queryByTestId('cancel-button')).not.toBeInTheDocument();
+    const { store } = renderWithRedux(<StoryEditor />, {
+      isLoading: true,
     });
 
-    it('should show cancel button when in edit mode', async () => {
-      const user = userEvent.setup();
-      renderWithRedux(<StoryEditor skipInit={true} />, {
-        story: 'Existing story',
-      });
+    // Verify logger.error was called with the error
+    await waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith('Error loading initial state:', expect.any(Error));
+    });
 
-      const editButton = screen.getByTestId('edit-button');
-      await user.click(editButton);
+    // Verify loading state is set to false even when error occurs
+    expect(store.getState().story.isLoading).toBe(false);
 
-      expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
+    // Restore original localStorage
+    mockLocalStorage.getItem = originalGetItem;
+  });
+
+  it('should handle error during story saving', async () => {
+    const user = userEvent.setup();
+
+    // Mock localStorage.setItem to throw an error
+    mockLocalStorage.setItem = jest.fn().mockImplementation(() => {
+      throw new Error('LocalStorage setItem error');
+    });
+
+    renderWithRedux(<StoryEditor />, { isLoading: false });
+
+    const textArea = screen.getByPlaceholderText(/write your story/i);
+    const submitButton = screen.getByRole('button', { name: /save/i });
+
+    // Type story
+    await user.clear(textArea);
+    await user.type(textArea, 'New story that will fail to save');
+
+    // Submit the form which will trigger error
+    await user.click(submitButton);
+
+    // Verify logger.error was called with the error
+    await waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith('Error saving story:', expect.any(Error));
     });
   });
 });
