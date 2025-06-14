@@ -26,6 +26,22 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - Tailwind CSS
 - Minimal dependencies
 
+## Node.js Version
+
+This project uses Node.js 22. The version is defined in:
+
+- `.nvmrc` file - for nvm users
+- `package.json` `engines` field - for npm/yarn
+- `package.json` `volta` field - for Volta users
+
+When using nvm, you can switch to the correct Node.js version with:
+
+```bash
+nvm use
+```
+
+All GitHub Actions workflows are configured to use the Node.js version specified in `.nvmrc`.
+
 ## Project Structure
 
 - `/src/app` - Application pages and layouts
