@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths } from "date-fns"
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, startOfWeek, endOfWeek } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -37,7 +37,13 @@ export const Calendar = ({ onDateClick }: CalendarProps) => {
   
   const monthStart = startOfMonth(currentDate)
   const monthEnd = endOfMonth(currentDate)
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
+  
+  // Get the start of the week for the first day of the month
+  const startDate = startOfWeek(monthStart)
+  // Get the end of the week for the last day of the month
+  const endDate = endOfWeek(monthEnd)
+  
+  const days = eachDayOfInterval({ start: startDate, end: endDate })
 
   const handlePreviousMonth = () => {
     setCurrentDate(subMonths(currentDate, 1))
