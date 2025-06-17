@@ -1,0 +1,176 @@
+name: Deployment Orchestrator
+
+on:
+  workflow_run:
+    workflows: ['Pipeline']
+    branches: [main]
+    types:
+      - completed
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      deployTarget:
+        description: 'Deployment target(s) to use'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - firebase
+          - aws-s3
+          - vercel
+          - github-pages
+          - netlify
+          - all
+
+jobs:
+  determine_target:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    outputs:
+      deploy_firebase: ${{ steps.set-targets.outputs.deploy_firebase }}
+      deploy_s3: ${{ steps.set-targets.outputs.deploy_s3 }}
+      deploy_vercel: ${{ steps.set-targets.outputs.deploy_vercel }}
+      deploy_github_pages: ${{ steps.set-targets.outputs.deploy_github_pages }}
+      deploy_netlify: ${{ steps.set-targets.outputs.deploy_netlify }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine deployment targets
+        id: set-targets
+        run: |
+          # Default - read from configuration
+          if [[ "${{ github.event.inputs.deployTarget }}" == "auto" || "${{ github.event.inputs.deployTarget }}" == "" ]]; then
+            # Check for firebase.json
+            if [ -f "firebase.json" ]; then
+              echo "deploy_firebase=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy_firebase=false" >> $GITHUB_OUTPUT
+            fi
+            
+            # Check for AWS deployment script
+            if [ -f "scripts/deploy-s3.js" ]; then
+              echo "deploy_s3=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy_s3=false" >> $GITHUB_OUTPUT
+            fi
+            
+            # Check for Vercel configuration
+            if [ -f "vercel.json" ] || grep -q "\"deploy:vercel\"" package.json; then
+              echo "deploy_vercel=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy_vercel=false" >> $GITHUB_OUTPUT
+            fi
+            
+            # GitHub Pages and Netlify not configured by default
+            echo "deploy_github_pages=false" >> $GITHUB_OUTPUT
+            echo "deploy_netlify=false" >> $GITHUB_OUTPUT
+
+          # Explicit target selection
+          else
+            case "${{ github.event.inputs.deployTarget }}" in
+              "firebase")
+                echo "deploy_firebase=true" >> $GITHUB_OUTPUT
+                echo "deploy_s3=false" >> $GITHUB_OUTPUT
+                echo "deploy_vercel=false" >> $GITHUB_OUTPUT
+                echo "deploy_github_pages=false" >> $GITHUB_OUTPUT
+                echo "deploy_netlify=false" >> $GITHUB_OUTPUT
+                ;;
+              "aws-s3")
+                echo "deploy_firebase=false" >> $GITHUB_OUTPUT
+                echo "deploy_s3=true" >> $GITHUB_OUTPUT
+                echo "deploy_vercel=false" >> $GITHUB_OUTPUT
+                echo "deploy_github_pages=false" >> $GITHUB_OUTPUT
+                echo "deploy_netlify=false" >> $GITHUB_OUTPUT
+                ;;
+              "vercel")
+                echo "deploy_firebase=false" >> $GITHUB_OUTPUT
+                echo "deploy_s3=false" >> $GITHUB_OUTPUT
+                echo "deploy_vercel=true" >> $GITHUB_OUTPUT
+                echo "deploy_github_pages=false" >> $GITHUB_OUTPUT
+                echo "deploy_netlify=false" >> $GITHUB_OUTPUT
+                ;;
+              "github-pages")
+                echo "deploy_firebase=false" >> $GITHUB_OUTPUT
+                echo "deploy_s3=false" >> $GITHUB_OUTPUT
+                echo "deploy_vercel=false" >> $GITHUB_OUTPUT
+                echo "deploy_github_pages=true" >> $GITHUB_OUTPUT
+                echo "deploy_netlify=false" >> $GITHUB_OUTPUT
+                ;;
+              "netlify")
+                echo "deploy_firebase=false" >> $GITHUB_OUTPUT
+                echo "deploy_s3=false" >> $GITHUB_OUTPUT
+                echo "deploy_vercel=false" >> $GITHUB_OUTPUT
+                echo "deploy_github_pages=false" >> $GITHUB_OUTPUT
+                echo "deploy_netlify=true" >> $GITHUB_OUTPUT
+                ;;
+              "all")
+                echo "deploy_firebase=true" >> $GITHUB_OUTPUT
+                echo "deploy_s3=true" >> $GITHUB_OUTPUT
+                echo "deploy_vercel=true" >> $GITHUB_OUTPUT
+                echo "deploy_github_pages=true" >> $GITHUB_OUTPUT
+                echo "deploy_netlify=true" >> $GITHUB_OUTPUT
+                ;;
+            esac
+          fi
+
+      - name: Show deployment targets
+        run: |
+          echo "Deployment Targets:"
+          echo "Firebase: ${{ steps.set-targets.outputs.deploy_firebase }}"
+          echo "AWS S3: ${{ steps.set-targets.outputs.deploy_s3 }}"
+          echo "Vercel: ${{ steps.set-targets.outputs.deploy_vercel }}"
+          echo "GitHub Pages: ${{ steps.set-targets.outputs.deploy_github_pages }}"
+          echo "Netlify: ${{ steps.set-targets.outputs.deploy_netlify }}"
+
+  trigger_firebase:
+    needs: determine_target
+    if: ${{ needs.determine_target.outputs.deploy_firebase == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Firebase deployment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'firebase-hosting-merge.yml',
+              ref: 'main'
+            })
+
+  trigger_aws_s3:
+    needs: determine_target
+    if: ${{ needs.determine_target.outputs.deploy_s3 == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger AWS S3 deployment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-s3.yml',
+              ref: 'main'
+            })
+
+  trigger_vercel:
+    needs: determine_target
+    if: ${{ needs.determine_target.outputs.deploy_vercel == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel deployment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-vercel.yml',
+              ref: 'main'
+            })
