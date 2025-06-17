@@ -1,4 +1,4 @@
-import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -42,13 +42,6 @@ jest.mock('@/config/imageService', () => ({
   },
 }));
 
-// Mock the imageServiceConfig
-jest.mock('@/config/imageService', () => ({
-  imageServiceConfig: {
-    getImageUrl: jest.fn().mockImplementation(date => `https://picsum.photos/800/400?date=${date}`),
-  },
-}));
-
 // Test wrapper component
 const renderWithRedux = (component: React.ReactElement, initialState = {}) => {
   // Ensure imageUrl is always present in initialState to prevent Next.js Image warnings
@@ -68,17 +61,6 @@ const renderWithRedux = (component: React.ReactElement, initialState = {}) => {
         ...initialState,
       },
     },
-  });
-
-// Test wrapper component
-const renderWithRedux = (component: React.ReactElement, initialState = {}) => {
-  // Ensure imageUrl is always present in initialState to prevent Next.js Image warnings
-  const today = new Date().toISOString().split('T')[0];
-  const defaultImageUrl = `https://picsum.photos/800/400?date=${today}`;
-
-  const store = createTestStore({
-    imageUrl: defaultImageUrl,
-    ...initialState,
   });
 
   return {
@@ -109,7 +91,6 @@ describe('StoryEditor Integration', () => {
       imageUrl: '',
     });
     expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
-
     expect(screen.getByTestId('loading-text')).toBeInTheDocument();
   });
 
@@ -191,65 +172,11 @@ describe('StoryEditor Integration', () => {
     const savedStory = 'Saved story';
     mockLocalStorage.getItem.mockReturnValue(savedStory);
 
-    it('should allow saving a new story', async () => {
-      const user = userEvent.setup();
-      const newStory = 'New test story';
+    renderWithRedux(<StoryEditor />, { isLoading: false });
 
-      // Mock implementation for localStorage
-      mockLocalStorage.setItem = jest.fn();
-
-      renderWithRedux(<StoryEditor skipInit={true} />);
-
-      // Get the textarea and type a new story
-      const textarea = screen.getByTestId('story-textarea');
-      await user.clear(textarea);
-      await user.type(textarea, newStory);
-
-      // Find and click the save button
-      const saveButton = screen.getByTestId('save-button');
-      await user.click(saveButton);
-
-      // Verify the story was saved to localStorage
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('todayStory', newStory);
-    });
-
-    it('should handle errors when saving', async () => {
-      const user = userEvent.setup();
-      const newStory = 'New test story';
-
-      // Mock implementation to throw an error
-      mockLocalStorage.setItem = jest.fn(() => {
-        throw new Error('Storage error');
-      });
-
-      renderWithRedux(<StoryEditor skipInit={true} />);
-
-      // Get the textarea and type a new story
-      const textarea = screen.getByTestId('story-textarea');
-      await user.clear(textarea);
-      await user.type(textarea, newStory);
-
-      // Find and click the save button
-      const saveButton = screen.getByTestId('save-button');
-      await user.click(saveButton);
-
-      // Verify error was logged
-      expect(logger.error).toHaveBeenCalled();
-    });
-
-    it('should load story from localStorage on initialization', async () => {
-      const savedStory = 'Previously saved story';
-      mockLocalStorage.getItem.mockReturnValue(savedStory);
-
-      // Force a clean render - need to re-render to ensure the localStorage mock is called
-      cleanup();
-
-      renderWithRedux(<StoryEditor />, { isLoading: false });
-
-      // Check if the story from localStorage appears
-      await waitFor(() => {
-        expect(screen.getByTestId('story-content')).toHaveTextContent(savedStory);
-      });
+    // Check if the story from localStorage appears
+    await waitFor(() => {
+      expect(screen.getByTestId('story-content')).toHaveTextContent(savedStory);
     });
   });
 
@@ -396,5 +323,29 @@ describe('StoryEditor Integration', () => {
     await waitFor(() => {
       expect(logger.error).toHaveBeenCalledWith('Error saving story:', expect.any(Error));
     });
+  });
+
+  it('should apply custom className when provided', () => {
+    const customClass = 'custom-class';
+    renderWithRedux(<StoryEditor className={customClass} skipInit={true} />);
+    const editor = screen.getByTestId('story-editor');
+    expect(editor).toHaveClass(customClass);
+  });
+
+  it('should not show cancel button when not in edit mode', () => {
+    renderWithRedux(<StoryEditor skipInit={true} />);
+    expect(screen.queryByTestId('cancel-button')).not.toBeInTheDocument();
+  });
+
+  it('should show cancel button when in edit mode', async () => {
+    const user = userEvent.setup();
+    renderWithRedux(<StoryEditor skipInit={true} />, {
+      story: 'Existing story',
+    });
+
+    const editButton = screen.getByTestId('edit-button');
+    await user.click(editButton);
+
+    expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
   });
 });
