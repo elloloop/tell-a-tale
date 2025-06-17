@@ -1,6 +1,6 @@
-# Blank Next.js App
+# Next.js App with Flexible Deployment Options
 
-This is a blank Next.js application with minimal setup.
+This is a Next.js application with a comprehensive testing, building, and deployment structure.
 
 ## Getting Started
 
@@ -8,23 +8,135 @@ First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Features
 
-- Next.js 15
+- Next.js 15 with App Router
 - React 18
 - TypeScript
 - Tailwind CSS
-- Minimal dependencies
+- Comprehensive test suite (Jest, Playwright)
+- Multiple deployment options (Firebase, AWS S3, Vercel)
+- GitHub Actions workflows for CI/CD
+
+## Testing
+
+This project includes a comprehensive testing setup:
+
+```bash
+# Run unit and integration tests with Jest
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run end-to-end tests with Playwright
+npm run test:e2e
+
+# Run all tests (linting, type checking, unit, and e2e tests)
+npm run test:all
+```
+
+## Building
+
+The project has different build scripts for different purposes:
+
+```bash
+# Standard production build
+npm run build:prod
+
+# Build with bundle analysis
+npm run build:analyze
+```
+
+## Deployment Options
+
+This project supports multiple deployment targets:
+
+### Firebase Hosting
+
+```bash
+# Deploy to Firebase (requires prior build)
+npm run deploy:firebase
+
+# Build and deploy to Firebase in one command
+npm run deploy:firebase:full
+```
+
+### AWS S3 / CloudFront
+
+```bash
+# Deploy to S3 (requires prior build)
+npm run deploy:s3
+
+# Build and deploy to S3 in one command
+npm run deploy:s3:full
+```
+
+Environment variables required:
+
+- `S3_BUCKET` - The name of your S3 bucket
+- `CLOUDFRONT_DISTRIBUTION_ID` (optional) - For cache invalidation
+
+### Vercel
+
+```bash
+# Deploy to Vercel
+npm run deploy:vercel
+```
+
+## CI/CD Pipeline
+
+This project uses GitHub Actions for CI/CD with separate workflows:
+
+1. **CI Pipeline** - Runs on every push and pull request:
+
+   - Linting
+   - Type checking
+   - Unit and integration tests
+   - End-to-end tests
+
+2. **Deployment Workflows** - Run after successful CI or manual trigger:
+   - Firebase deployment
+   - AWS S3 deployment
+   - Vercel deployment
+
+## Node.js Version
+
+This project uses Node.js 22. The version is defined in:
+
+- `.nvmrc` file - for nvm users
+- `package.json` `engines` field - for npm/yarn
+- `package.json` `volta` field - for Volta users
+
+When using nvm, you can switch to the correct Node.js version with:
+
+```bash
+nvm use
+```
+
+All GitHub Actions workflows are configured to use the Node.js version specified in `.nvmrc`.
+
+## Project Structure
+
+- `/src/app` - Application pages and layouts
+- `/src/components` - React components
+- `/src/contexts` - React contexts
+- `/src/config` - Application configuration
+- `/src/lib` - Utility functions
+- `/src/services` - Service layer
+- `/src/store` - State management
+- `/e2e` - End-to-end tests
+- `/scripts` - Utility scripts
+- `/.github/workflows` - CI/CD workflows
+
+## Documentation
+
+- [Deployment Options](docs/deployment-options.md) - Detailed information about deployment options
+- [CI Simulation](docs/ci-simulation.md) - How to simulate CI locally
 
 ## Node.js Version
 

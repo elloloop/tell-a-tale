@@ -22,6 +22,25 @@ on:
           - github-pages
           - netlify
           - all
+      environment:
+        description: 'Deployment environment (if using deploy-config.json)'
+        required: false
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+          - development
+
+# Define environment variables for deployment targets that can be set in repository settings
+env:
+  DEPLOY_TARGET_FIREBASE: ''
+  DEPLOY_TARGET_AWS_S3: ''
+  DEPLOY_TARGET_VERCEL: ''
+  DEPLOY_TARGET_GITHUB_PAGES: ''
+  DEPLOY_TARGET_NETLIFY: ''
+  # Set to "true" to override all other target settings and deploy to specified target only
+  DEPLOY_TARGET_OVERRIDE: ''
 
 jobs:
   determine_target:
@@ -40,35 +59,80 @@ jobs:
       - name: Determine deployment targets
         id: set-targets
         run: |
-          # Default - read from configuration
-          if [[ "${{ github.event.inputs.deployTarget }}" == "auto" || "${{ github.event.inputs.deployTarget }}" == "" ]]; then
-            # Check for firebase.json
-            if [ -f "firebase.json" ]; then
+          # Check if we have an override environment variable
+          if [[ -n "${{ env.DEPLOY_TARGET_OVERRIDE }}" ]]; then
+            echo "Using deployment target override: ${{ env.DEPLOY_TARGET_OVERRIDE }}"
+            
+            # Reset all targets to false first
+            echo "deploy_firebase=false" >> $GITHUB_OUTPUT
+            echo "deploy_s3=false" >> $GITHUB_OUTPUT
+            echo "deploy_vercel=false" >> $GITHUB_OUTPUT
+            echo "deploy_github_pages=false" >> $GITHUB_OUTPUT
+            echo "deploy_netlify=false" >> $GITHUB_OUTPUT
+            
+            # Set the override target to true
+            case "${{ env.DEPLOY_TARGET_OVERRIDE }}" in
+              "firebase")
+                echo "deploy_firebase=true" >> $GITHUB_OUTPUT
+                ;;
+              "aws-s3")
+                echo "deploy_s3=true" >> $GITHUB_OUTPUT
+                ;;
+              "vercel")
+                echo "deploy_vercel=true" >> $GITHUB_OUTPUT
+                ;;
+              "github-pages")
+                echo "deploy_github_pages=true" >> $GITHUB_OUTPUT
+                ;;
+              "netlify")
+                echo "deploy_netlify=true" >> $GITHUB_OUTPUT
+                ;;
+              "all")
+                echo "deploy_firebase=true" >> $GITHUB_OUTPUT
+                echo "deploy_s3=true" >> $GITHUB_OUTPUT
+                echo "deploy_vercel=true" >> $GITHUB_OUTPUT
+                echo "deploy_github_pages=true" >> $GITHUB_OUTPUT
+                echo "deploy_netlify=true" >> $GITHUB_OUTPUT
+                ;;
+            esac
+
+          # Check for individual environment variable target settings
+          elif [[ -n "${{ env.DEPLOY_TARGET_FIREBASE }}" || -n "${{ env.DEPLOY_TARGET_AWS_S3 }}" || -n "${{ env.DEPLOY_TARGET_VERCEL }}" || -n "${{ env.DEPLOY_TARGET_GITHUB_PAGES }}" || -n "${{ env.DEPLOY_TARGET_NETLIFY }}" ]]; then
+            echo "Using environment variable deployment target settings"
+            
+            # Set each target based on its environment variable
+            if [[ "${{ env.DEPLOY_TARGET_FIREBASE }}" == "true" ]]; then
               echo "deploy_firebase=true" >> $GITHUB_OUTPUT
             else
               echo "deploy_firebase=false" >> $GITHUB_OUTPUT
             fi
             
-            # Check for AWS deployment script
-            if [ -f "scripts/deploy-s3.js" ]; then
+            if [[ "${{ env.DEPLOY_TARGET_AWS_S3 }}" == "true" ]]; then
               echo "deploy_s3=true" >> $GITHUB_OUTPUT
             else
               echo "deploy_s3=false" >> $GITHUB_OUTPUT
             fi
             
-            # Check for Vercel configuration
-            if [ -f "vercel.json" ] || grep -q "\"deploy:vercel\"" package.json; then
+            if [[ "${{ env.DEPLOY_TARGET_VERCEL }}" == "true" ]]; then
               echo "deploy_vercel=true" >> $GITHUB_OUTPUT
             else
               echo "deploy_vercel=false" >> $GITHUB_OUTPUT
             fi
             
-            # GitHub Pages and Netlify not configured by default
-            echo "deploy_github_pages=false" >> $GITHUB_OUTPUT
-            echo "deploy_netlify=false" >> $GITHUB_OUTPUT
-
-          # Explicit target selection
-          else
+            if [[ "${{ env.DEPLOY_TARGET_GITHUB_PAGES }}" == "true" ]]; then
+              echo "deploy_github_pages=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy_github_pages=false" >> $GITHUB_OUTPUT
+            fi
+            
+            if [[ "${{ env.DEPLOY_TARGET_NETLIFY }}" == "true" ]]; then
+              echo "deploy_netlify=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy_netlify=false" >> $GITHUB_OUTPUT
+            fi
+            
+          # Manual selection via workflow dispatch
+          elif [[ "${{ github.event.inputs.deployTarget }}" != "auto" && "${{ github.event.inputs.deployTarget }}" != "" ]]; then
             case "${{ github.event.inputs.deployTarget }}" in
               "firebase")
                 echo "deploy_firebase=true" >> $GITHUB_OUTPUT
@@ -113,6 +177,72 @@ jobs:
                 echo "deploy_netlify=true" >> $GITHUB_OUTPUT
                 ;;
             esac
+
+          # Default - use config file or fall back to auto-detection
+          else
+            # Check for deploy-config.json first
+            if [ -f "deploy-config.json" ]; then
+              echo "Using deploy-config.json for target determination"
+              
+              # Get environment from input or use production as default
+              ENVIRONMENT="${{ github.event.inputs.environment }}"
+              if [[ -z "$ENVIRONMENT" ]]; then
+                ENVIRONMENT="production"
+              fi
+              
+              # Read from the config file
+              if [[ $(jq --arg env "$ENVIRONMENT" '.environments[$env] != null' deploy-config.json) == "true" ]]; then
+                # Environment-specific settings exist
+                echo "Using environment: $ENVIRONMENT"
+                FIREBASE=$(jq --arg env "$ENVIRONMENT" '.environments[$env].targets.firebase // .targets.firebase // false' deploy-config.json)
+                S3=$(jq --arg env "$ENVIRONMENT" '.environments[$env].targets["aws-s3"] // .targets["aws-s3"] // false' deploy-config.json)
+                VERCEL=$(jq --arg env "$ENVIRONMENT" '.environments[$env].targets.vercel // .targets.vercel // false' deploy-config.json)
+                GITHUB_PAGES=$(jq --arg env "$ENVIRONMENT" '.environments[$env].targets["github-pages"] // .targets["github-pages"] // false' deploy-config.json)
+                NETLIFY=$(jq --arg env "$ENVIRONMENT" '.environments[$env].targets.netlify // .targets.netlify // false' deploy-config.json)
+              else
+                # Use default targets
+                echo "Environment $ENVIRONMENT not found, using default targets"
+                FIREBASE=$(jq '.targets.firebase // false' deploy-config.json)
+                S3=$(jq '.targets["aws-s3"] // false' deploy-config.json)
+                VERCEL=$(jq '.targets.vercel // false' deploy-config.json)
+                GITHUB_PAGES=$(jq '.targets["github-pages"] // false' deploy-config.json)
+                NETLIFY=$(jq '.targets.netlify // false' deploy-config.json)
+              fi
+              
+              echo "deploy_firebase=$FIREBASE" >> $GITHUB_OUTPUT
+              echo "deploy_s3=$S3" >> $GITHUB_OUTPUT
+              echo "deploy_vercel=$VERCEL" >> $GITHUB_OUTPUT
+              echo "deploy_github_pages=$GITHUB_PAGES" >> $GITHUB_OUTPUT
+              echo "deploy_netlify=$NETLIFY" >> $GITHUB_OUTPUT
+            else
+              # Fallback to file detection
+              echo "No deploy-config.json found, using file detection"
+              
+              # Check for firebase.json
+              if [ -f "firebase.json" ]; then
+                echo "deploy_firebase=true" >> $GITHUB_OUTPUT
+              else
+                echo "deploy_firebase=false" >> $GITHUB_OUTPUT
+              fi
+              
+              # Check for AWS deployment script
+              if [ -f "scripts/deploy-s3.js" ]; then
+                echo "deploy_s3=true" >> $GITHUB_OUTPUT
+              else
+                echo "deploy_s3=false" >> $GITHUB_OUTPUT
+              fi
+              
+              # Check for Vercel configuration
+              if [ -f "vercel.json" ] || grep -q "\"deploy:vercel\"" package.json; then
+                echo "deploy_vercel=true" >> $GITHUB_OUTPUT
+              else
+                echo "deploy_vercel=false" >> $GITHUB_OUTPUT
+              fi
+              
+              # GitHub Pages and Netlify not configured by default
+              echo "deploy_github_pages=false" >> $GITHUB_OUTPUT
+              echo "deploy_netlify=false" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: Show deployment targets

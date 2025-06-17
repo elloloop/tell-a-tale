@@ -15,6 +15,36 @@
       }
     },
     {
+      "label": "Test and Build",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Run All Quality Checks", "Build (Production)"],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Full CI/CD Pipeline (Firebase)",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Run All Quality Checks", "Build (Production)", "Deploy to Firebase"],
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Full CI/CD Pipeline (AWS S3)",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Run All Quality Checks", "Build (Production)", "Deploy to AWS S3"],
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
       "label": "Lint",
       "type": "shell",
       "command": "npm run lint",
@@ -84,6 +114,83 @@
       "label": "Run CI Pipeline Locally",
       "type": "shell",
       "command": "npm run ci-local",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build (Production)",
+      "type": "shell",
+      "command": "npm run build:prod",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Build (Analyze)",
+      "type": "shell",
+      "command": "npm run build:analyze",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Deploy to Firebase",
+      "type": "shell",
+      "command": "npm run deploy:firebase",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Deploy to Firebase (Full)",
+      "type": "shell",
+      "command": "npm run deploy:firebase:full",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Deploy to AWS S3",
+      "type": "shell",
+      "command": "npm run deploy:s3",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Deploy to AWS S3 (Full)",
+      "type": "shell",
+      "command": "npm run deploy:s3:full",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Deploy to Vercel",
+      "type": "shell",
+      "command": "npm run deploy:vercel",
       "group": "none",
       "presentation": {
         "reveal": "always",
