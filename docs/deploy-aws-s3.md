@@ -86,4 +86,57 @@ This guide explains how to deploy this project to AWS S3 using the provided GitH
 
 ---
 
-For further help, contact the project maintainer or your DevOps team. 
+For further help, contact the project maintainer or your DevOps team.
+
+---
+
+## Optional Changes in Case of Errors
+
+If you encounter errors such as **Access Denied** or **403 Forbidden** when accessing your deployed site, try the following steps:
+
+### 1. Set a Public Read Bucket Policy
+
+Go to the AWS S3 Console → Your bucket → Permissions → **Bucket Policy** and add the following policy (replace the bucket name if needed):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::deploy-github-actions/*"
+    }
+  ]
+}
+```
+
+### 2. Enable Static Website Hosting
+
+- Go to your bucket → **Properties** → **Static website hosting**.
+- Enable static website hosting.
+- Set the **index document** to `index.html`.
+- (Optional) Set the **error document** to `error.html`.
+- Save changes.
+
+### 3. Ensure ACLs are Enabled
+
+- Go to **Permissions** → **Object Ownership**.
+- Make sure "ACLs enabled" and "Bucket owner preferred" is set (recommended for public sites).
+- For each object (file), the "Public" column should show a globe icon (public).
+
+---
+
+## Example Final URLs for Deployed Application
+
+- **S3 Static Website URL:**
+  - `http://deploy-github-actions.s3-website.eu-north-1.amazonaws.com/`
+  - (Format: `http://<bucket-name>.s3-website-<region>.amazonaws.com/`)
+
+- **CloudFront URL (if configured):**
+  - `https://d1234abcd.cloudfront.net/`
+  - (Format: `https://<cloudfront-distribution-domain>/`)
+
+--- 
