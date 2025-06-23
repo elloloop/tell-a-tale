@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Caveat } from 'next/font/google';
 import './globals.css';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { Providers } from './providers';
 
 // Use Inter font for general text
@@ -31,11 +29,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${caveat.variable}`}>
       <body className="min-h-screen flex flex-col">
         <Providers>
-          <Header />
-          <main className="flex-grow container mx-auto px-4 py-8">
-            {children}
-          </main>
-          <Footer />
+          {children}
         </Providers>
       </body>
     </html>
