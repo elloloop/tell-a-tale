@@ -41,6 +41,8 @@ const customJestConfig = {
     },
   },
   coverageReporters: ['text', 'lcov', 'html'],
+  // Suppress console output in CI
+  silent: process.env.CI === 'true',
   transformIgnorePatterns: [
     "/node_modules/(?!lucide-react).+\\.js$"
   ],
