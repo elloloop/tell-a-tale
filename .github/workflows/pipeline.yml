@@ -34,33 +34,20 @@ jobs:
 
       - name: Check for skip E2E flag
         id: check-skip-e2e
-        run: |
-          # Check PR title for [skip e2e] flag
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            PR_TITLE=$(jq -r .pull_request.title "${{ github.event_path }}")
-            if [[ "$PR_TITLE" =~ \[skip[- ]e2e\] ]]; then
-              echo "Skipping E2E tests due to [skip e2e] flag in PR title"
-              echo "skip=true" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-          fi
-
-          # Check commit message for [skip e2e] flag
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          if [[ "$COMMIT_MSG" =~ \[skip[- ]e2e\] ]]; then
-            echo "Skipping E2E tests due to [skip e2e] flag in commit message"
-            echo "skip=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # No skip flag found
-          echo "skip=false" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_OUTPUT: $GITHUB_OUTPUT
+          TEST_COMMIT_MSG: '' # Let it use the real commit message in CI
+        run: ./scripts/check-skip-e2e.sh
 
       - name: Run E2E tests
         if: steps.check-skip-e2e.outputs.skip != 'true'
         run: |
           npx playwright install --with-deps
           npm run test:e2e
+
+      # The [skip-e2e] flag can be included in PR titles or commit messages to skip E2E tests
 
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
