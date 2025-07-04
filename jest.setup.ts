@@ -34,6 +34,24 @@ beforeEach(() => {
     // For any other warnings, log them normally
     console.log(...args);
   });
+
+  // Also suppress console.log for expected error messages in CI
+  if (process.env.CI) {
+    jest.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
+      // Suppress expected error messages that are logged during tests
+      if (
+        typeof args[0] === 'string' &&
+        (args[0].includes('Error: Uncaught') ||
+          args[0].includes('useStory must be used within a StoryProvider'))
+      ) {
+        return;
+      }
+      // For any other logs, allow them through
+      process.stdout.write(args.join(' ') + '\n');
+    });
+  }
+
+  // Note: Console suppression for CI is handled by the console.error and console.warn mocks above
 });
 
 afterEach(() => {
