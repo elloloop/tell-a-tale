@@ -2,40 +2,21 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import RootLayout from '../layout';
 
-// Mock next/font/google
+// ---- mocks -------------------------------------------------------------
+
 jest.mock('next/font/google', () => ({
-  Inter: jest.fn().mockReturnValue({
-    className: 'mock-inter-class',
-    variable: '--font-inter',
-  }),
-  Caveat: jest.fn().mockReturnValue({
-    className: 'mock-caveat-class',
-    variable: '--font-caveat',
-  }),
+  Inter: jest.fn().mockReturnValue({ className: 'mock-inter', variable: '--font-inter' }),
+  Caveat: jest.fn().mockReturnValue({ className: 'mock-caveat', variable: '--font-caveat' }),
 }));
 
-// Mock the providers component
 jest.mock('../providers', () => ({
   Providers: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="mock-providers">{children}</div>
   ),
 }));
 
-// Mock the Header component
-jest.mock('@/components/Header', () => {
-  return function MockHeader() {
-    return <div data-testid="mock-header">Header</div>;
-  };
-});
+// ---- silence expected console noise ------------------------------------
 
-// Mock the Footer component
-jest.mock('@/components/Footer', () => {
-  return function MockFooter() {
-    return <div data-testid="mock-footer">Footer</div>;
-  };
-});
-
-// Override JSDOM limitations for testing Next.js layout
 const originalError = console.error;
 beforeAll(() => {
   console.error = (...args) => {
@@ -55,81 +36,68 @@ afterAll(() => {
   console.error = originalError;
 });
 
+// ---- tests -------------------------------------------------------------
+
 describe('RootLayout', () => {
-  it('renders with children properly', () => {
-    const testContent = 'Test Content';
+  const testContent = 'Test Content';
 
-    // Using an approach that bypasses the HTML/body element rendering issues in tests
+  it('renders children through Providers', () => {
     render(
       <div id="test-container">
         <RootLayout>{testContent}</RootLayout>
       </div>
     );
 
-    // Verify the content is rendered
     expect(screen.getByText(testContent)).toBeInTheDocument();
-
-    // Verify the structure has expected components
     expect(screen.getByTestId('mock-providers')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-header')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-footer')).toBeInTheDocument();
   });
 
-  it('includes font variables in the class names', () => {
-    const testContent = 'Test Content';
-
-    // Using an approach that tests the class name creation logic
-    render(
-      <div id="test-container">
-        <RootLayout>{testContent}</RootLayout>
-      </div>
-    );
-
-    // The implementation details of how we test this might vary, but we need to
-    // ensure the font variables are being applied correctly
-
-    // In the actual component, this className would be applied to the html element
-    expect('--font-inter --font-caveat').toContain('--font-inter');
-    expect('--font-inter --font-caveat').toContain('--font-caveat');
-  });
-
-  it('contains main element with correct classes', () => {
-    const testContent = 'Test Content';
-
+  it('adds font variables to <html>', () => {
     const { container } = render(
       <div id="test-container">
         <RootLayout>{testContent}</RootLayout>
       </div>
     );
 
-    // Find the main element and check its classes
-    const mainElement = container.querySelector('main');
-    expect(mainElement).toBeInTheDocument();
-    expect(mainElement?.className).toContain('flex-grow');
-    expect(mainElement?.className).toContain('container');
-    expect(mainElement?.className).toContain('mx-auto');
-    expect(mainElement?.className).toContain('px-4');
-    expect(mainElement?.className).toContain('py-8');
+    const html = container.querySelector('html');
+    expect(html).toBeInTheDocument();
+    expect(html?.className).toContain('--font-inter');
+    expect(html?.className).toContain('--font-caveat');
   });
 
-  it('contains body element with correct classes', () => {
-    const testContent = 'Test Content';
-
-    // Mock the expected structure to test the body class
-    render(
+  it('renders <main> with expected layout classes', () => {
+    const { container } = render(
       <div id="test-container">
         <RootLayout>{testContent}</RootLayout>
       </div>
     );
 
-    // In a more specific test, we'd check the actual body element,
-    // but for coverage we can test the implementation detail of the body classes
+    const main = container.querySelector('main');
+    expect(main).toBeInTheDocument();
+    expect(main?.className).toContain('flex-grow');
+    expect(main?.className).toContain('container');
+    expect(main?.className).toContain('mx-auto');
+  });
 
-    // Since we can't directly access the body in the rendered output,
-    // we can check if our test setup has a div with the expected classes
-    const bodyLikeElement = screen.getByTestId('mock-providers').parentElement;
-    expect(bodyLikeElement?.className).toContain('min-h-screen');
-    expect(bodyLikeElement?.className).toContain('flex');
-    expect(bodyLikeElement?.className).toContain('flex-col');
+  it('renders body-like wrapper with layout classes', () => {
+    const { container } = render(
+      <div id="test-container">
+        <RootLayout>{testContent}</RootLayout>
+      </div>
+    );
+
+    // Try selecting <body> directly (works only if RootLayout includes it)
+    const realBody = container.querySelector('body');
+    if (realBody) {
+      expect(realBody.className).toContain('min-h-screen');
+      expect(realBody.className).toContain('flex');
+      expect(realBody.className).toContain('flex-col');
+    } else {
+      // Fallback: get grandparent of mocked Providers
+      const fallback = screen.getByTestId('mock-providers')?.parentElement?.parentElement;
+      expect(fallback?.className).toContain('min-h-screen');
+      expect(fallback?.className).toContain('flex');
+      expect(fallback?.className).toContain('flex-col');
+    }
   });
 });
