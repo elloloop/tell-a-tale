@@ -11,12 +11,12 @@
     "production": {
       "targets": {
         "firebase": true,
-        "aws-s3": true
+        "aws-s3": false
       }
     },
     "staging": {
       "targets": {
-        "vercel": true
+        "vercel": false
       }
     }
   }
