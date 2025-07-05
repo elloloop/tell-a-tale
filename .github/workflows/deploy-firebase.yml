@@ -35,12 +35,11 @@ jobs:
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
 
-      - name: Setup Firebase CLI
-        run: npm install -g firebase-tools
-
       - name: Deploy to Firebase (Penloop)
-        run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_ELLOTALES }}' > firebase-service-account.json
-          firebase deploy --only hosting --project penloop
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ./firebase-service-account.json
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_ELLOTALES }}'
+          channelId: live
+          projectId: elloloop-tell-a-tale
+          entryPoint: .
