@@ -1,4 +1,4 @@
-# Only run commitizen if no commit message was provided via -m or -F
-if [ -z "${GIT_PARAMS}" ]; then
-  exec < /dev/tty && npx cz --hook || true
-fi
+# Commitizen disabled - using regular git commits
+# if [ -z "${GIT_PARAMS}" ]; then
+#   exec < /dev/tty && npx cz --hook || true
+# fi
