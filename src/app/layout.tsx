@@ -28,9 +28,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${caveat.variable}`}>
       <body className="min-h-screen flex flex-col">
-        <Providers>
-          {children}
-        </Providers>
+        <main className="flex-grow container mx-auto">
+          <Providers>{children}</Providers>
+        </main>
       </body>
     </html>
   );
