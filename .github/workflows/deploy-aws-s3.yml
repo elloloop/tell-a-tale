@@ -1,0 +1,36 @@
+name: Deploy to AWS S3
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        required: false
+        type: string
+        default: 'main'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build:prod
+
+      - name: Deploy to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+        run: npm run deploy:s3

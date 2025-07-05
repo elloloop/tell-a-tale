@@ -2,7 +2,7 @@ name: E2E Tests Post Deploy
 
 on:
   workflow_run:
-    workflows: ['Deploy to Firebase', 'Deploy to AWS S3', 'Deploy to Vercel']
+    workflows: ['Deployment Orchestrator']
     types:
       - completed
     branches:

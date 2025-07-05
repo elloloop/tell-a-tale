@@ -1,14 +1,20 @@
 name: Deploy to Firebase
 
 on:
-  # Triggered by the deployment orchestrator or manually
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        required: false
+        type: string
+        default: 'main'
 
 jobs:
-  build_and_deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
