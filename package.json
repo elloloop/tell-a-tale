@@ -20,9 +20,13 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
+    "test:e2e:docker": "./scripts/run-e2e-docker.sh",
+    "test:e2e:docker:dev": "./scripts/run-e2e-docker-dev.sh",
+    "test:e2e:docker:rebuild": "./scripts/run-e2e-docker.sh --rebuild",
+    "test:e2e:docker:ui": "npx playwright test --config=playwright.config.docker.ts --ui",
     "test:ci": "./scripts/run-unit-tests.sh",
     "test:story-editor": "./scripts/test-story-editor.sh",
-    "test:all": "npm run lint && npm run typecheck && npm test && npm run test:e2e",
+    "test:all": "npm run lint && npm run typecheck && npm test && npm run test:e2e:docker",
     "# Build scripts": "",
     "build:prod": "next build",
     "build:analyze": "ANALYZE=true next build",
@@ -34,7 +38,7 @@
     "deploy:vercel": "vercel --prod",
     "# CI/CD scripts": "",
     "ci-local": "./scripts/run-ci-local.sh",
-    "ci:test": "npm run lint && npm run typecheck && npm test && npm run test:e2e",
+    "ci:test": "npm run lint && npm run typecheck && npm test && npm run test:e2e:docker",
     "ci:build": "npm run build:prod",
     "ci:deploy": "npm run deploy:firebase",
     "# Git hooks": "",
@@ -84,7 +88,8 @@
     "postcss": "^8",
     "prettier": "^3.5.3",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^8.0.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

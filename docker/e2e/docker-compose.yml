@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: docker/e2e/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    volumes:
+      - ../../playwright-report:/app/playwright-report
+      - ../../test-results:/app/test-results
+    networks:
+      - e2e-network
+
+  e2e-tests:
+    build:
+      context: ../..
+      dockerfile: docker/e2e/Dockerfile
+    depends_on:
+      - app
+    environment:
+      - NODE_ENV=test
+      - CI=true
+      - PLAYWRIGHT_BASE_URL=http://app:3000
+    volumes:
+      - ../../playwright-report:/app/playwright-report
+      - ../../test-results:/app/test-results
+      - ../../e2e:/app/e2e
+    command: >
+      sh -c "
+        npx wait-on http://app:3000 --timeout 60000 &&
+        npx playwright test --config=playwright.config.docker.ts
+      "
+    networks:
+      - e2e-network
+
+networks:
+  e2e-network:
+    driver: bridge
