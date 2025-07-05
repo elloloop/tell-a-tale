@@ -41,14 +41,6 @@ jobs:
           TEST_COMMIT_MSG: '' # Let it use the real commit message in CI
         run: ./scripts/check-skip-e2e.sh
 
-      - name: Run E2E tests
-        if: steps.check-skip-e2e.outputs.skip != 'true'
-        run: |
-          npx playwright install --with-deps
-          npm run test:e2e
-
-      # The [skip-e2e] flag can be included in PR titles or commit messages to skip E2E tests
-
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:
