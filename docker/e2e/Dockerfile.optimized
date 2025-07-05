@@ -1,0 +1,107 @@
+# Multi-stage Dockerfile for optimized E2E testing
+FROM node:22-bullseye-slim AS base
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install global dependencies
+RUN npm install -g wait-on
+
+# Copy package files for dependency installation
+COPY package*.json ./
+
+# Install dependencies with production optimization
+FROM base AS dependencies
+RUN npm ci --only=production && npm cache clean --force
+
+# Install all dependencies including dev dependencies for building
+FROM base AS build-deps
+RUN npm ci
+
+# Build stage
+FROM build-deps AS build
+COPY . .
+RUN npm run build
+
+# Playwright stage - includes browsers
+FROM mcr.microsoft.com/playwright:v1.52.0-focal AS playwright-base
+
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm ci
+
+# Copy application code
+COPY . .
+
+# Production E2E stage
+FROM playwright-base AS production
+
+# Copy built application from build stage
+COPY --from=build /app/.next ./.next
+COPY --from=build /app/public ./public
+
+# Create optimized run script
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+# Start the production app in background\n\
+npm start &\n\
+APP_PID=$!\n\
+\n\
+# Wait for the app to be ready with retry logic\n\
+echo "Waiting for app to be ready..."\n\
+for i in {1..30}; do\n\
+  if curl -s http://localhost:3000 > /dev/null; then\n\
+    echo "App is ready!"\n\
+    break\n\
+  fi\n\
+  echo "Attempt $i/30: App not ready yet, waiting..."\n\
+  sleep 2\n\
+done\n\
+\n\
+# Run the E2E tests with Docker config\n\
+echo "Starting E2E tests..."\n\
+npx playwright test --config=playwright.config.docker.ts\n\
+TEST_EXIT_CODE=$?\n\
+\n\
+# Clean up\n\
+echo "Cleaning up..."\n\
+kill $APP_PID\n\
+\n\
+exit $TEST_EXIT_CODE\n\
+' > /app/run-e2e-optimized.sh && chmod +x /app/run-e2e-optimized.sh
+
+# Development E2E stage
+FROM playwright-base AS development
+
+# Create development run script with hot reload
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+# Start the development server in background\n\
+npm run dev &\n\
+APP_PID=$!\n\
+\n\
+# Wait for the app to be ready\n\
+echo "Waiting for development server to be ready..."\n\
+wait-on http://localhost:3000 --timeout 60000\n\
+\n\
+# Run the E2E tests with Docker config\n\
+npx playwright test --config=playwright.config.docker.ts\n\
+TEST_EXIT_CODE=$?\n\
+\n\
+# Clean up\n\
+kill $APP_PID\n\
+\n\
+exit $TEST_EXIT_CODE\n\
+' > /app/run-e2e-dev-optimized.sh && chmod +x /app/run-e2e-dev-optimized.sh
+
+# Default command for production
+CMD ["./run-e2e-optimized.sh"]

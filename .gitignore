@@ -81,4 +81,8 @@ ui-debug.log
 
 # Docker
 docker-compose.override.yml
+docker-compose.optimized.yml
+docker-compose.chromium.yml
+docker-compose.firefox.yml
+docker-compose.webkit.yml
 .docker/

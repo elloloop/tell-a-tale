@@ -30,6 +30,15 @@ npm run test:e2e:docker:dev
 
 # Rebuild Docker images and run tests
 npm run test:e2e:docker:rebuild
+
+# Run optimized E2E tests with multi-stage builds
+npm run test:e2e:docker:optimized
+
+# Run E2E tests in parallel across all browsers
+npm run test:e2e:docker:parallel
+
+# Run E2E tests for a specific browser
+npm run test:e2e:docker:browser chromium
 ```
 
 ### Direct Script Usage
@@ -46,6 +55,18 @@ npm run test:e2e:docker:rebuild
 
 # Keep containers running after tests (for debugging)
 ./scripts/run-e2e-docker.sh --no-cleanup
+
+# Run optimized E2E tests with advanced options
+./scripts/run-e2e-docker-optimized.sh
+
+# Run optimized tests in parallel across browsers
+./scripts/run-e2e-docker-optimized.sh --parallel
+
+# Run optimized tests for specific browser
+./scripts/run-e2e-docker-optimized.sh --browser firefox
+
+# Run optimized tests without Docker cache
+./scripts/run-e2e-docker-optimized.sh --no-cache --rebuild
 ```
 
 ## Architecture
@@ -64,11 +85,17 @@ docker/
 ├── e2e/
 │   ├── Dockerfile              # Production E2E test container
 │   ├── Dockerfile.dev          # Development E2E test container
+│   ├── Dockerfile.optimized    # Multi-stage optimized container
 │   ├── docker-compose.yml      # Docker Compose configuration
 │   └── .dockerignore           # Docker build exclusions
 ├── scripts/
-│   ├── run-e2e-docker.sh       # Main E2E Docker runner
-│   └── run-e2e-docker-dev.sh   # Development E2E runner
+│   ├── run-e2e-docker.sh         # Main E2E Docker runner
+│   ├── run-e2e-docker-dev.sh     # Development E2E runner
+│   └── run-e2e-docker-optimized.sh # Optimized E2E runner with advanced features
+├── .github/workflows/
+│   ├── pipeline.yml           # Main CI pipeline with Docker E2E
+│   ├── e2e-post-deploy.yml    # Post-deployment E2E tests
+│   └── e2e-matrix.yml         # Matrix testing across browsers
 └── playwright.config.docker.ts  # Playwright config for Docker
 ```
 
@@ -196,6 +223,44 @@ E2E tests also run after deployment:
    docker-compose logs e2e-tests
    ```
 
+## Advanced Features
+
+### Optimized Docker Builds
+
+The optimized Dockerfile uses multi-stage builds for better performance:
+
+- **Base Stage**: Common system dependencies
+- **Build Stage**: Application compilation
+- **Playwright Stage**: Browser installation
+- **Production/Development Stages**: Optimized runtime environments
+
+### Parallel Browser Testing
+
+Run tests across multiple browsers simultaneously:
+
+```bash
+# Test all browsers in parallel
+npm run test:e2e:docker:parallel
+
+# Test specific browser
+npm run test:e2e:docker:browser webkit
+```
+
+### Matrix Testing
+
+The `e2e-matrix.yml` workflow provides:
+
+- Parallel execution across chromium, firefox, and webkit
+- Separate artifact collection per browser
+- Fail-fast disabled for comprehensive testing
+
+### Caching and Performance
+
+- Docker layer caching for faster builds
+- Multi-stage builds to minimize image size
+- Shared base images across containers
+- Volume mounts for persistent test results
+
 ## Performance Optimization
 
 ### Local Development
@@ -203,12 +268,14 @@ E2E tests also run after deployment:
 - Use development mode for faster iteration
 - Keep containers running between test runs
 - Use volume mounts for live updates
+- Use optimized builds for better performance
 
 ### CI Environment
 
 - Use production builds for accuracy
 - Optimize Docker layer caching
 - Run tests in parallel when possible
+- Use matrix strategy for comprehensive browser coverage
 
 ## Migration from Native E2E Tests
 
@@ -223,6 +290,9 @@ New Docker scripts:
 
 - `npm run test:e2e:docker` - Docker E2E tests
 - `npm run test:e2e:docker:dev` - Docker development mode
+- `npm run test:e2e:docker:optimized` - Optimized multi-stage Docker tests
+- `npm run test:e2e:docker:parallel` - Parallel browser testing
+- `npm run test:e2e:docker:browser` - Single browser testing
 
 ### Configuration
 

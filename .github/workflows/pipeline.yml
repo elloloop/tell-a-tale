@@ -48,6 +48,9 @@ jobs:
           docker --version
           docker-compose --version
           
+          # Ensure clean state
+          docker system prune -f || true
+          
           # Run E2E tests in Docker containers
           npm run test:e2e:docker
 
@@ -58,7 +61,14 @@ jobs:
           path: coverage/
 
       - name: Upload Playwright report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-ci
           path: playwright-report/
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-ci
+          path: test-results/
