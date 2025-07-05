@@ -1,5 +1,5 @@
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import Header from '@/shared/components/Header';
+import Footer from '@/shared/components/Footer';
 
 export default function UsersLayout({
   children,
@@ -9,10 +9,8 @@ export default function UsersLayout({
   return (
     <>
       <Header />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        {children}
-      </main>
+      <main className="flex-grow container mx-auto px-4 py-8">{children}</main>
       <Footer />
     </>
   );
-} 
+}

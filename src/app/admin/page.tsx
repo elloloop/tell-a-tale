@@ -1,26 +1,26 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Calendar } from "@/components/admin/Calendar"
-import { DatePopup } from "@/components/admin/DatePopup"
+import { useState } from 'react';
+import { Calendar } from '@/features/admin/components/Calendar';
+import { DatePopup } from '@/features/admin/components/DatePopup';
 
 export default function AdminPage() {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const handleDateClick = (date: Date) => {
-    setSelectedDate(date)
-  }
+    setSelectedDate(date);
+  };
 
   const handleClosePopup = () => {
-    setSelectedDate(null)
-  }
+    setSelectedDate(null);
+  };
 
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
       </div>
-      
+
       <div className="grid gap-6">
         <div className="rounded-lg border p-6">
           <h2 className="text-xl font-semibold mb-4">Calendar View</h2>
@@ -28,9 +28,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {selectedDate && (
-        <DatePopup date={selectedDate} onClose={handleClosePopup} />
-      )}
+      {selectedDate && <DatePopup date={selectedDate} onClose={handleClosePopup} />}
     </div>
-  )
-} 
+  );
+}

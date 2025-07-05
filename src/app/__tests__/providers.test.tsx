@@ -3,12 +3,12 @@ import { Providers } from '../providers';
 
 // Mock redux
 jest.mock('react-redux', () => ({
-  Provider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
+  Provider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 // Mock the store
-jest.mock('@/store/store', () => ({
-  store: {}
+jest.mock('@/shared/store/store', () => ({
+  store: {},
 }));
 
 describe('Providers Component', () => {
@@ -18,7 +18,7 @@ describe('Providers Component', () => {
         <div>Test Content</div>
       </Providers>
     );
-    
+
     expect(container).toBeInTheDocument();
   });
 });
