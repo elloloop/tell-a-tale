@@ -104,19 +104,44 @@ This project uses GitHub Actions for CI/CD with separate workflows:
    - AWS S3 deployment
    - Vercel deployment
 
-## Node.js Version
+## Node.js Version Management
 
-This project uses Node.js 22. The version is defined in:
+This project uses Node.js 22.5.0 and automatically manages the correct version using multiple strategies:
+
+### Automatic Version Management
+
+The project is configured to automatically use the correct Node.js version through:
+
+1. **Volta** (Recommended): Automatically switches to Node.js 22.5.0 when you enter the project directory
+2. **`.nvmrc` file**: For nvm users, run `nvm use` to switch to the correct version
+3. **`package.json` engines field**: Prevents installation with incompatible Node.js versions
+
+### Setup Instructions
+
+**For Volta users (recommended):**
+
+```bash
+# Volta will automatically use Node.js 22.5.0 when you enter the project
+cd tell-a-tale
+volta install node@22.5.0  # This happens automatically via postinstall script
+```
+
+**For nvm users:**
+
+```bash
+nvm use  # Uses the version specified in .nvmrc
+```
+
+**For other users:**
+Install Node.js 22.5.0 manually or use any Node.js version manager of your choice.
+
+### Version Configuration
+
+The Node.js version is defined in:
 
 - `.nvmrc` file - for nvm users
 - `package.json` `engines` field - for npm/yarn
 - `package.json` `volta` field - for Volta users
-
-When using nvm, you can switch to the correct Node.js version with:
-
-```bash
-nvm use
-```
 
 All GitHub Actions workflows are configured to use the Node.js version specified in `.nvmrc`.
 
@@ -137,22 +162,6 @@ All GitHub Actions workflows are configured to use the Node.js version specified
 
 - [Deployment Options](docs/deployment-options.md) - Detailed information about deployment options
 - [CI Simulation](docs/ci-simulation.md) - How to simulate CI locally
-
-## Node.js Version
-
-This project uses Node.js 22. The version is defined in:
-
-- `.nvmrc` file - for nvm users
-- `package.json` `engines` field - for npm/yarn
-- `package.json` `volta` field - for Volta users
-
-When using nvm, you can switch to the correct Node.js version with:
-
-```bash
-nvm use
-```
-
-All GitHub Actions workflows are configured to use the Node.js version specified in `.nvmrc`.
 
 ## Project Structure
 
