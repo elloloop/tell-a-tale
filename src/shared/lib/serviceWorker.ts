@@ -58,7 +58,7 @@ export async function unregisterServiceWorker() {
 }
 
 // Send a message to the service worker
-export function sendMessageToServiceWorker(message: any) {
+export function sendMessageToServiceWorker(message: { type: string; [key: string]: unknown }) {
   if (typeof window === 'undefined' || !navigator.serviceWorker.controller) {
     return;
   }

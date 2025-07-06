@@ -27,7 +27,7 @@ const mockServiceWorker = {
   getRegistration: jest.fn(),
   controller: {
     postMessage: jest.fn(),
-  },
+  } as { postMessage: jest.Mock } | null,
 };
 
 const mockCaches = {
@@ -136,7 +136,7 @@ describe('Service Worker Utilities', () => {
 
       sendMessageToServiceWorker(message);
 
-      expect(mockServiceWorker.controller.postMessage).toHaveBeenCalledWith(message);
+      expect(mockServiceWorker.controller?.postMessage).toHaveBeenCalledWith(message);
     });
 
     it('should not send message when no controller', () => {
@@ -240,7 +240,7 @@ describe('Service Worker Utilities', () => {
     it('should return not supported when caches API is not available', async () => {
       // Remove caches from window
       const originalCaches = window.caches;
-      delete (window as any).caches;
+      delete (window as { caches?: CacheStorage }).caches;
 
       const status = await getCacheStatus();
 
@@ -270,7 +270,7 @@ describe('Service Worker Utilities', () => {
     it('should handle missing caches API', async () => {
       // Remove caches from window
       const originalCaches = window.caches;
-      delete (window as any).caches;
+      delete (window as { caches?: CacheStorage }).caches;
 
       await expect(clearAllCaches()).resolves.not.toThrow();
 

@@ -43,7 +43,7 @@ describe('RegionSelector', () => {
         ...originalWindow.location,
         reload: mockReload,
       },
-    } as any;
+    } as typeof window;
   });
 
   afterEach(() => {
