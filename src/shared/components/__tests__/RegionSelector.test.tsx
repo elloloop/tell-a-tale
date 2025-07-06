@@ -43,7 +43,7 @@ describe('RegionSelector', () => {
         ...originalWindow.location,
         reload: mockReload,
       },
-    } as typeof window;
+    } as unknown as Window & typeof globalThis;
   });
 
   afterEach(() => {
@@ -52,17 +52,17 @@ describe('RegionSelector', () => {
 
   it('should render with current region', () => {
     render(<RegionSelector />);
-    
+
     expect(screen.getByTestId('region-selector-button')).toBeInTheDocument();
     expect(screen.getByText('Global')).toBeInTheDocument();
   });
 
   it('should show dropdown when button is clicked', () => {
     render(<RegionSelector />);
-    
+
     const button = screen.getByTestId('region-selector-button');
     fireEvent.click(button);
-    
+
     expect(screen.getByTestId('region-option-us')).toBeInTheDocument();
     expect(screen.getByTestId('region-option-eu')).toBeInTheDocument();
     expect(screen.getByTestId('region-option-ap')).toBeInTheDocument();
@@ -82,10 +82,10 @@ describe('RegionSelector', () => {
     });
 
     render(<RegionSelector />);
-    
+
     const button = screen.getByTestId('region-selector-button');
     fireEvent.click(button);
-    
+
     const euOption = screen.getByTestId('region-option-eu');
     expect(euOption).toHaveClass('bg-blue-50', 'text-blue-700');
     expect(screen.getByText('✓')).toBeInTheDocument();
@@ -93,26 +93,26 @@ describe('RegionSelector', () => {
 
   it('should show detected region marker', () => {
     (regionService.getRegionFromDomain as jest.Mock).mockReturnValue('us');
-    
+
     render(<RegionSelector />);
-    
+
     const button = screen.getByTestId('region-selector-button');
     fireEvent.click(button);
-    
+
     expect(screen.getByText('(detected)')).toBeInTheDocument();
   });
 
   it('should set region override when selecting different region', () => {
     (regionService.getRegionFromDomain as jest.Mock).mockReturnValue('global');
-    
+
     render(<RegionSelector />);
-    
+
     const button = screen.getByTestId('region-selector-button');
     fireEvent.click(button);
-    
+
     const euOption = screen.getByTestId('region-option-eu');
     fireEvent.click(euOption);
-    
+
     expect(regionService.setRegionOverride).toHaveBeenCalledWith('eu');
     // Note: window.location.reload doesn't work in test environment, that's expected
   });
@@ -120,36 +120,36 @@ describe('RegionSelector', () => {
   it('should clear region override when selecting detected region', () => {
     (regionService.getRegionFromDomain as jest.Mock).mockReturnValue('us');
     (regionService.getCurrentRegion as jest.Mock).mockReturnValue('eu');
-    
+
     render(<RegionSelector />);
-    
+
     const button = screen.getByTestId('region-selector-button');
     fireEvent.click(button);
-    
+
     const usOption = screen.getByTestId('region-option-us');
     fireEvent.click(usOption);
-    
+
     expect(regionService.clearRegionOverride).toHaveBeenCalled();
     // Note: window.location.reload doesn't work in test environment, that's expected
   });
 
   it('should close dropdown when clicking outside', () => {
     render(<RegionSelector />);
-    
+
     const button = screen.getByTestId('region-selector-button');
     fireEvent.click(button);
-    
+
     expect(screen.getByTestId('region-option-us')).toBeInTheDocument();
-    
+
     const overlay = screen.getByTestId('region-selector-overlay');
     fireEvent.click(overlay);
-    
+
     expect(screen.queryByTestId('region-option-us')).not.toBeInTheDocument();
   });
 
   it('should apply custom className', () => {
     const { container } = render(<RegionSelector className="custom-class" />);
-    
+
     const regionSelector = container.firstChild as HTMLElement;
     expect(regionSelector).toHaveClass('custom-class');
   });
