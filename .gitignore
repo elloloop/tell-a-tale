@@ -78,3 +78,11 @@ ui-debug.log
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Docker
+docker-compose.override.yml
+docker-compose.optimized.yml
+docker-compose.chromium.yml
+docker-compose.firefox.yml
+docker-compose.webkit.yml
+.docker/

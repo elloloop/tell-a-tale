@@ -41,6 +41,19 @@ jobs:
           TEST_COMMIT_MSG: '' # Let it use the real commit message in CI
         run: ./scripts/check-skip-e2e.sh
 
+      - name: Run E2E tests in Docker
+        if: steps.check-skip-e2e.outputs.should_skip != 'true'
+        run: |
+          # Setup Docker environment for E2E tests
+          docker --version
+          docker-compose --version
+          
+          # Ensure clean state
+          docker system prune -f || true
+          
+          # Run E2E tests in Docker containers
+          npm run test:e2e:docker
+
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:
@@ -48,7 +61,14 @@ jobs:
           path: coverage/
 
       - name: Upload Playwright report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-ci
           path: playwright-report/
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-ci
+          path: test-results/

@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 
 # Script to verify the correct Node.js version is being used
 # Based on the .nvmrc file
