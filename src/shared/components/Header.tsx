@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import RegionSelector from './RegionSelector';
 
 export default function Header() {
   return (
@@ -8,7 +9,7 @@ export default function Header() {
           <Link href="/" className="text-2xl font-handwriting">
             Tell A Tale
           </Link>
-          <div className="space-x-6">
+          <div className="flex items-center space-x-6">
             <Link href="/" className="font-handwriting hover:text-gray-600">
               Home
             </Link>
@@ -18,6 +19,7 @@ export default function Header() {
             <Link href="/about" className="font-handwriting hover:text-gray-600">
               About
             </Link>
+            <RegionSelector />
           </div>
         </div>
       </nav>

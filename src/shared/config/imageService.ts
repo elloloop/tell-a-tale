@@ -1,3 +1,5 @@
+import { regionService } from './regionService';
+
 export const imageServiceConfig = {
   getBaseUrl: () => {
     if (typeof window !== 'undefined') {
@@ -10,5 +12,25 @@ export const imageServiceConfig = {
   height: 400,
   getImageUrl: (date: string) => {
     return `${imageServiceConfig.getBaseUrl()}/${imageServiceConfig.width}/${imageServiceConfig.height}?date=${date}`;
+  },
+  // New S3-based image URL generation with region support
+  getS3ImageUrl: (date: string, region?: string) => {
+    const baseUrl = imageServiceConfig.getBaseUrl();
+    const regionPath = regionService.getRegionPath(region);
+    
+    // If using S3, construct path as: baseUrl/region/YYYY-MM-DD.jpg
+    if (baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) {
+      return `${baseUrl}/${regionPath}/${date}.jpg`;
+    }
+    
+    // For non-S3 URLs, fallback to original format with region as parameter
+    return `${baseUrl}/${imageServiceConfig.width}/${imageServiceConfig.height}?date=${date}&region=${regionPath}`;
+  },
+  // Get fallback image URL for yesterday
+  getFallbackImageUrl: (date: string, region?: string) => {
+    const yesterday = new Date(date);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    return imageServiceConfig.getS3ImageUrl(yesterdayStr, region);
   },
 };

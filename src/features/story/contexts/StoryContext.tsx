@@ -6,6 +6,7 @@ import { setStory, setImageUrl, setLoading } from '@/features/story/store/storyS
 import { RootState } from '@/shared/store/store';
 import { logger } from '@/shared/lib/logger';
 import { imageServiceConfig } from '@/shared/config/imageService';
+import { cacheTodayImage } from '@/shared/lib/serviceWorker';
 
 interface StoryContextType {
   story: string | null;
@@ -60,8 +61,22 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
         }
 
         const today = new Date().toISOString().split('T')[0];
-        const imageUrl = imageServiceConfig.getImageUrl(today);
+        // Try S3 image URL first, fallback to original method if not S3
+        const baseUrl = imageServiceConfig.getBaseUrl();
+        let imageUrl;
+        
+        if (baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) {
+          imageUrl = imageServiceConfig.getS3ImageUrl(today);
+        } else {
+          imageUrl = imageServiceConfig.getImageUrl(today);
+        }
+        
         dispatch(setImageUrl(imageUrl));
+        
+        // Cache today's image for offline access
+        if (imageUrl) {
+          cacheTodayImage(imageUrl);
+        }
       } catch (error) {
         logger.error('Error loading initial state:', error);
       } finally {
@@ -101,6 +116,20 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
   };
 
   const handleImageError = () => {
+    // Try fallback to yesterday's image
+    const today = new Date().toISOString().split('T')[0];
+    const baseUrl = imageServiceConfig.getBaseUrl();
+    
+    if ((baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) && !imageUrl?.includes('fallback')) {
+      const fallbackUrl = imageServiceConfig.getFallbackImageUrl(today);
+      // Mark as fallback to prevent infinite loop
+      const fallbackUrlWithMarker = `${fallbackUrl}&fallback=true`;
+      dispatch(setImageUrl(fallbackUrlWithMarker));
+      setImageLoading(true); // Reset loading state to try fallback
+      return;
+    }
+    
+    // If fallback also fails or not using S3, show error
     setImageLoading(false);
     setImageError(true);
   };

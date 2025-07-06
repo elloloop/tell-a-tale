@@ -39,6 +39,9 @@ jest.mock('next/image', () => ({
 jest.mock('@/shared/config/imageService', () => ({
   imageServiceConfig: {
     getImageUrl: jest.fn().mockImplementation(date => `https://picsum.photos/800/400?date=${date}`),
+    getBaseUrl: jest.fn().mockReturnValue('https://picsum.photos'),
+    getS3ImageUrl: jest.fn().mockImplementation(date => `https://picsum.photos/800/400?date=${date}`),
+    getFallbackImageUrl: jest.fn().mockImplementation(date => `https://picsum.photos/800/400?date=${date}&fallback=true`),
   },
 }));
 
