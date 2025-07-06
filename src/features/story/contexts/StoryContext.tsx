@@ -6,7 +6,7 @@ import { setStory, setImageUrl, setLoading } from '@/features/story/store/storyS
 import { RootState } from '@/shared/store/store';
 import { logger } from '@/shared/lib/logger';
 import { imageServiceConfig } from '@/shared/config/imageService';
-import { cacheTodayImage } from '@/shared/lib/serviceWorker';
+import { cacheTodayImage, preloadTomorrowImage } from '@/shared/lib/serviceWorker';
 
 interface StoryContextType {
   story: string | null;
@@ -22,6 +22,8 @@ interface StoryContextType {
   handleCancel: () => void;
   handleImageLoad: () => void;
   handleImageError: () => void;
+  animationsEnabled: boolean;
+  setAnimationsEnabled: (enabled: boolean) => void;
 }
 
 const StoryContext = createContext<StoryContextType | undefined>(undefined);
@@ -46,6 +48,7 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [animationsEnabled, setAnimationsEnabled] = useState(true);
 
   // Initialize story from localStorage and fetch image
   useEffect(() => {
@@ -60,13 +63,23 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
           setDraft(savedStory);
         }
 
+        // Load animation preference
+        const savedAnimationPref = localStorage.getItem('animationsEnabled');
+        if (savedAnimationPref !== null) {
+          setAnimationsEnabled(JSON.parse(savedAnimationPref));
+        }
+
         const today = new Date().toISOString().split('T')[0];
-        // Try S3 image URL first, fallback to original method if not S3
         const baseUrl = imageServiceConfig.getBaseUrl();
         let imageUrl;
         
         if (baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) {
-          imageUrl = imageServiceConfig.getS3ImageUrl(today);
+          // Try animated content first if animations are enabled
+          if (animationsEnabled) {
+            imageUrl = imageServiceConfig.getMediaUrl(today, undefined, false); // Try GIF first
+          } else {
+            imageUrl = imageServiceConfig.getS3ImageUrl(today);
+          }
         } else {
           imageUrl = imageServiceConfig.getImageUrl(today);
         }
@@ -77,6 +90,9 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
         if (imageUrl) {
           cacheTodayImage(imageUrl);
         }
+
+        // Setup midnight preloading for tomorrow's image
+        setupMidnightPreloading();
       } catch (error) {
         logger.error('Error loading initial state:', error);
       } finally {
@@ -85,7 +101,40 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
     };
 
     loadInitialState();
-  }, [dispatch, skipInit]);
+  }, [dispatch, skipInit, animationsEnabled]);
+
+  // Save animation preference when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('animationsEnabled', JSON.stringify(animationsEnabled));
+    }
+  }, [animationsEnabled]);
+
+  // Setup midnight preloading timer
+  const setupMidnightPreloading = () => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0); // Set to midnight
+
+    const timeUntilMidnight = tomorrow.getTime() - now.getTime();
+
+    // Set initial timer for next midnight
+    const timeoutId = setTimeout(() => {
+      // Preload tomorrow's image
+      preloadTomorrowImage();
+      
+      // Set up daily recurring preloading
+      setInterval(() => {
+        preloadTomorrowImage();
+      }, 24 * 60 * 60 * 1000); // Every 24 hours
+    }, timeUntilMidnight);
+
+    // Cleanup function
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  };
 
   // Sync draft with story when story changes
   useEffect(() => {
@@ -121,11 +170,20 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
     const baseUrl = imageServiceConfig.getBaseUrl();
     
     if ((baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) && !imageUrl?.includes('fallback')) {
+      // First try: if we failed on animated content, try static image
+      if (animationsEnabled && imageServiceConfig.isAnimatedUrl(imageUrl)) {
+        const staticUrl = imageUrl.replace(/\.(gif|mp4|webm|mov)$/, '.jpg');
+        const staticUrlWithMarker = `${staticUrl}&fallback=static`;
+        dispatch(setImageUrl(staticUrlWithMarker));
+        setImageLoading(true);
+        return;
+      }
+      
+      // Second try: yesterday's image
       const fallbackUrl = imageServiceConfig.getFallbackImageUrl(today);
-      // Mark as fallback to prevent infinite loop
-      const fallbackUrlWithMarker = `${fallbackUrl}&fallback=true`;
+      const fallbackUrlWithMarker = `${fallbackUrl}&fallback=yesterday`;
       dispatch(setImageUrl(fallbackUrlWithMarker));
-      setImageLoading(true); // Reset loading state to try fallback
+      setImageLoading(true);
       return;
     }
     
@@ -148,6 +206,8 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
     handleCancel,
     handleImageLoad,
     handleImageError,
+    animationsEnabled,
+    setAnimationsEnabled,
   };
 
   return <StoryContext.Provider value={value}>{children}</StoryContext.Provider>;

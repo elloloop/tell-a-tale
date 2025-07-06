@@ -33,4 +33,38 @@ export const imageServiceConfig = {
     const yesterdayStr = yesterday.toISOString().split('T')[0];
     return imageServiceConfig.getS3ImageUrl(yesterdayStr, region);
   },
+  // Get media URL with animation support (GIF/MP4)
+  getMediaUrl: (date: string, region?: string, preferVideo = false) => {
+    const baseUrl = imageServiceConfig.getBaseUrl();
+    const regionPath = regionService.getRegionPath(region);
+    
+    // If using S3, try video first if preferred, then fallback to image
+    if (baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) {
+      if (preferVideo) {
+        // Try MP4 first, then GIF, then fallback to JPG
+        return `${baseUrl}/${regionPath}/${date}.mp4`;
+      } else {
+        // Try GIF first, then fallback to JPG
+        return `${baseUrl}/${regionPath}/${date}.gif`;
+      }
+    }
+    
+    // For non-S3 URLs, fallback to original format
+    return imageServiceConfig.getS3ImageUrl(date, region);
+  },
+  // Check if URL is for video content
+  isVideoUrl: (url: string) => {
+    return url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
+  },
+  // Check if URL is for animated content
+  isAnimatedUrl: (url: string) => {
+    return url.includes('.gif') || imageServiceConfig.isVideoUrl(url);
+  },
+  // Get tomorrow's image URL for preloading
+  getTomorrowImageUrl: (region?: string) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    return imageServiceConfig.getS3ImageUrl(tomorrowStr, region);
+  },
 };

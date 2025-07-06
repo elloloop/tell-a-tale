@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useStory, StoryProvider } from '@/features/story/contexts/StoryContext';
+import { imageServiceConfig } from '@/shared/config/imageService';
 
 interface StoryEditorProps {
   className?: string;
@@ -64,9 +65,35 @@ function StoryContent() {
   );
 }
 
-// StoryImage component to handle image display
+// StorySettings component for animation toggle
+function StorySettings() {
+  const { animationsEnabled, setAnimationsEnabled } = useStory();
+
+  return (
+    <div className="mb-4 flex justify-end">
+      <button
+        onClick={() => setAnimationsEnabled(!animationsEnabled)}
+        className="flex items-center space-x-2 px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+        title={`${animationsEnabled ? 'Disable' : 'Enable'} animations`}
+        data-testid="animation-toggle"
+      >
+        <span>{animationsEnabled ? '🎬' : '🖼️'}</span>
+        <span className="hidden sm:inline">
+          {animationsEnabled ? 'Animations On' : 'Static Images'}
+        </span>
+      </button>
+    </div>
+  );
+}
 function StoryImage() {
-  const { imageUrl, imageLoading, imageError, handleImageLoad, handleImageError } = useStory();
+  const { 
+    imageUrl, 
+    imageLoading, 
+    imageError, 
+    handleImageLoad, 
+    handleImageError,
+    animationsEnabled 
+  } = useStory();
 
   return (
     <div className="relative">
@@ -77,16 +104,30 @@ function StoryImage() {
         </div>
       ) : (
         <div className="relative w-full h-64">
-          <Image
-            src={imageUrl}
-            alt="Image of the day"
-            fill
-            className="object-cover rounded-lg shadow-lg"
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-            style={{ display: imageLoading ? 'none' : 'block' }}
-            data-testid="story-image"
-          />
+          {imageServiceConfig.isVideoUrl(imageUrl) ? (
+            <video
+              src={imageUrl}
+              className="w-full h-full object-cover rounded-lg shadow-lg"
+              onLoadedData={handleImageLoad}
+              onError={handleImageError}
+              autoPlay={animationsEnabled}
+              loop
+              muted
+              playsInline
+              data-testid="story-video"
+            />
+          ) : (
+            <Image
+              src={imageUrl}
+              alt="Image of the day"
+              fill
+              className="object-cover rounded-lg shadow-lg"
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              style={{ display: imageLoading ? 'none' : 'block' }}
+              data-testid="story-image"
+            />
+          )}
         </div>
       )}
     </div>
@@ -113,6 +154,7 @@ function StoryEditorContent({ className = '' }: { className?: string }) {
 
   return (
     <div className={`max-w-2xl mx-auto p-4 ${className}`} data-testid="story-editor">
+      <StorySettings />
       <StoryImage />
       <StoryContent />
     </div>

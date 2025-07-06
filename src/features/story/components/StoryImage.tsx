@@ -1,10 +1,22 @@
 'use client';
 
-import Image from 'next/image';
 import { useStory } from '@/features/story/contexts/StoryContext';
+import MediaDisplay from '@/shared/components/MediaDisplay';
+import { imageServiceConfig } from '@/shared/config/imageService';
 
 export default function StoryImage() {
-  const { imageUrl, imageLoading, imageError, handleImageLoad, handleImageError } = useStory();
+  const { 
+    imageUrl, 
+    imageLoading, 
+    imageError, 
+    handleImageLoad, 
+    handleImageError,
+    animationsEnabled 
+  } = useStory();
+
+  // Generate fallback URL for error handling
+  const today = new Date().toISOString().split('T')[0];
+  const fallbackUrl = imageServiceConfig.getFallbackImageUrl(today);
 
   return (
     <div className="relative">
@@ -15,15 +27,17 @@ export default function StoryImage() {
         </div>
       ) : (
         <div className="relative w-full h-64">
-          <Image
+          <MediaDisplay
             src={imageUrl}
-            alt="Image of the day"
-            fill
-            className="object-cover rounded-lg shadow-lg"
+            alt="Daily story prompt"
+            className="rounded-lg shadow-lg"
+            width={800}
+            height={256}
             onLoad={handleImageLoad}
             onError={handleImageError}
-            style={{ display: imageLoading ? 'none' : 'block' }}
-            data-testid="story-image"
+            fallbackSrc={fallbackUrl}
+            autoplayAnimations={animationsEnabled}
+            muteVideos={true}
           />
         </div>
       )}

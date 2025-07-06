@@ -74,6 +74,13 @@ export function cacheTodayImage(imageUrl: string) {
   });
 }
 
+// Preload tomorrow's image at midnight
+export function preloadTomorrowImage() {
+  sendMessageToServiceWorker({
+    type: 'PRELOAD_TOMORROW_IMAGE',
+  });
+}
+
 // Check if the app is running offline
 export function isOffline(): boolean {
   if (typeof window === 'undefined') {

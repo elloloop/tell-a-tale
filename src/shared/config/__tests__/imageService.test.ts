@@ -123,4 +123,86 @@ describe('Image Service Config', () => {
       expect(url).toBe('https://my-bucket.s3.amazonaws.com/global/2023-01-31.jpg');
     });
   });
+
+  describe('getMediaUrl', () => {
+    it('should generate MP4 URL when preferVideo is true', () => {
+      (window.localStorage.getItem as jest.Mock).mockReturnValue('https://my-bucket.s3.amazonaws.com');
+      (regionService.getRegionPath as jest.Mock).mockReturnValue('us');
+      
+      const date = '2023-01-01';
+      const url = imageServiceConfig.getMediaUrl(date, undefined, true);
+      expect(url).toBe('https://my-bucket.s3.amazonaws.com/us/2023-01-01.mp4');
+    });
+
+    it('should generate GIF URL when preferVideo is false', () => {
+      (window.localStorage.getItem as jest.Mock).mockReturnValue('https://my-bucket.s3.amazonaws.com');
+      (regionService.getRegionPath as jest.Mock).mockReturnValue('eu');
+      
+      const date = '2023-01-01';
+      const url = imageServiceConfig.getMediaUrl(date, undefined, false);
+      expect(url).toBe('https://my-bucket.s3.amazonaws.com/eu/2023-01-01.gif');
+    });
+
+    it('should fallback to S3 URL for non-S3 base URLs', () => {
+      (window.localStorage.getItem as jest.Mock).mockReturnValue('https://picsum.photos');
+      (regionService.getRegionPath as jest.Mock).mockReturnValue('ap');
+      
+      const date = '2023-01-01';
+      const url = imageServiceConfig.getMediaUrl(date, undefined, true);
+      expect(url).toBe('https://picsum.photos/800/400?date=2023-01-01&region=ap');
+    });
+  });
+
+  describe('isVideoUrl', () => {
+    it('should return true for MP4 URLs', () => {
+      expect(imageServiceConfig.isVideoUrl('https://example.com/video.mp4')).toBe(true);
+    });
+
+    it('should return true for WEBM URLs', () => {
+      expect(imageServiceConfig.isVideoUrl('https://example.com/video.webm')).toBe(true);
+    });
+
+    it('should return true for MOV URLs', () => {
+      expect(imageServiceConfig.isVideoUrl('https://example.com/video.mov')).toBe(true);
+    });
+
+    it('should return false for image URLs', () => {
+      expect(imageServiceConfig.isVideoUrl('https://example.com/image.jpg')).toBe(false);
+    });
+
+    it('should return false for GIF URLs', () => {
+      expect(imageServiceConfig.isVideoUrl('https://example.com/image.gif')).toBe(false);
+    });
+  });
+
+  describe('isAnimatedUrl', () => {
+    it('should return true for GIF URLs', () => {
+      expect(imageServiceConfig.isAnimatedUrl('https://example.com/image.gif')).toBe(true);
+    });
+
+    it('should return true for video URLs', () => {
+      expect(imageServiceConfig.isAnimatedUrl('https://example.com/video.mp4')).toBe(true);
+    });
+
+    it('should return false for static image URLs', () => {
+      expect(imageServiceConfig.isAnimatedUrl('https://example.com/image.jpg')).toBe(false);
+    });
+  });
+
+  describe('getTomorrowImageUrl', () => {
+    it('should generate URL for tomorrow\'s image', () => {
+      (window.localStorage.getItem as jest.Mock).mockReturnValue('https://my-bucket.s3.amazonaws.com');
+      (regionService.getRegionPath as jest.Mock).mockReturnValue('global');
+      
+      // Mock Date to return a fixed date
+      const mockDate = new Date('2023-01-01');
+      jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
+      
+      const url = imageServiceConfig.getTomorrowImageUrl();
+      expect(url).toBe('https://my-bucket.s3.amazonaws.com/global/2023-01-02.jpg');
+      
+      // Restore Date
+      jest.restoreAllMocks();
+    });
+  });
 });

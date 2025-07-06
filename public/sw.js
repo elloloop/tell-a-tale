@@ -79,7 +79,7 @@ function isImageRequest(request) {
   // Check for image file extensions or image service domains
   return (
     request.destination === 'image' ||
-    /\.(jpg|jpeg|png|gif|webp|svg|mp4)$/i.test(url.pathname) ||
+    /\.(jpg|jpeg|png|gif|webp|svg|mp4|webm|mov)$/i.test(url.pathname) ||
     url.hostname.includes('picsum') ||
     url.hostname.includes('amazonaws.com')
   );
@@ -243,5 +243,38 @@ self.addEventListener('message', (event) => {
         console.log('[SW] Failed to cache today\'s image:', error);
       });
     }
+  }
+  
+  if (event.data && event.data.type === 'PRELOAD_TOMORROW_IMAGE') {
+    console.log('[SW] Received request to preload tomorrow\'s image');
+    
+    // Calculate tomorrow's date
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
+    // Try to preload tomorrow's image (multiple formats)
+    const baseUrl = 'https://s3.amazonaws.com/tell-a-tale-prompts'; // Default S3 bucket
+    const region = 'global'; // Default region
+    
+    const urlsToPreload = [
+      `${baseUrl}/${region}/${tomorrowStr}.jpg`,
+      `${baseUrl}/${region}/${tomorrowStr}.gif`,
+      `${baseUrl}/${region}/${tomorrowStr}.mp4`,
+    ];
+    
+    // Attempt to preload each format
+    urlsToPreload.forEach(url => {
+      caches.open(IMAGE_CACHE_NAME).then(cache => {
+        return fetch(url).then(response => {
+          if (response.ok) {
+            console.log('[SW] Successfully preloaded:', url);
+            return cache.put(url, response);
+          }
+        }).catch(error => {
+          console.log('[SW] Failed to preload:', url, error);
+        });
+      });
+    });
   }
 });
