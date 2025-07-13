@@ -73,11 +73,11 @@ function StorySettings() {
     <div className="mb-4 flex justify-end">
       <button
         onClick={() => setAnimationsEnabled(!animationsEnabled)}
-        className="flex items-center space-x-2 px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+        className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
         title={`${animationsEnabled ? 'Disable' : 'Enable'} animations`}
         data-testid="animation-toggle"
       >
-        <span>{animationsEnabled ? '🎬' : '🖼️'}</span>
+        <span className="text-xl">{animationsEnabled ? '🎬' : '🖼️'}</span>
         <span className="hidden sm:inline">
           {animationsEnabled ? 'Animations On' : 'Static Images'}
         </span>
@@ -86,25 +86,33 @@ function StorySettings() {
   );
 }
 function StoryImage() {
-  const { 
-    imageUrl, 
-    imageLoading, 
-    imageError, 
-    handleImageLoad, 
+  const {
+    imageUrl,
+    imageLoading,
+    imageError,
+    handleImageLoad,
     handleImageError,
-    animationsEnabled 
+    animationsEnabled,
   } = useStory();
 
   return (
     <div className="relative">
-      {imageLoading && <div className="w-full h-64 bg-gray-200 animate-pulse rounded-lg" />}
+      {imageLoading && (
+        <div
+          className="w-full h-64 bg-gray-200 animate-pulse rounded-lg"
+          data-testid="image-loading"
+        />
+      )}
       {imageError ? (
-        <div className="w-full h-64 bg-gray-100 flex items-center justify-center rounded-lg">
+        <div
+          className="w-full h-64 bg-gray-100 flex items-center justify-center rounded-lg"
+          data-testid="image-error"
+        >
           <p className="text-gray-500">Failed to load image</p>
         </div>
       ) : (
         <div className="relative w-full h-64">
-          {imageServiceConfig.isVideoUrl(imageUrl) ? (
+          {imageUrl && imageServiceConfig.isVideoUrl(imageUrl) ? (
             <video
               src={imageUrl}
               className="w-full h-full object-cover rounded-lg shadow-lg"
@@ -114,9 +122,10 @@ function StoryImage() {
               loop
               muted
               playsInline
+              controls={false}
               data-testid="story-video"
             />
-          ) : (
+          ) : imageUrl ? (
             <Image
               src={imageUrl}
               alt="Image of the day"
@@ -127,7 +136,7 @@ function StoryImage() {
               style={{ display: imageLoading ? 'none' : 'block' }}
               data-testid="story-image"
             />
-          )}
+          ) : null}
         </div>
       )}
     </div>

@@ -72,29 +72,39 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
         const today = new Date().toISOString().split('T')[0];
         const baseUrl = imageServiceConfig.getBaseUrl();
         let imageUrl;
-        
+
+        // Attempt to load the appropriate image based on animation preferences
         if (baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) {
-          // Try animated content first if animations are enabled
           if (animationsEnabled) {
-            imageUrl = imageServiceConfig.getMediaUrl(today, undefined, false); // Try GIF first
+            // Try animated content first
+            imageUrl = imageServiceConfig.getMediaUrl(today, undefined, false);
           } else {
+            // Use static image if animations are disabled
             imageUrl = imageServiceConfig.getS3ImageUrl(today);
           }
         } else {
+          // Fallback to regular image service
           imageUrl = imageServiceConfig.getImageUrl(today);
         }
-        
-        dispatch(setImageUrl(imageUrl));
-        
-        // Cache today's image for offline access
+
         if (imageUrl) {
+          dispatch(setImageUrl(imageUrl));
+
+          // Cache today's image for offline access
           cacheTodayImage(imageUrl);
+
+          // Also cache a static version as fallback
+          if (animationsEnabled && imageServiceConfig.isAnimatedUrl(imageUrl)) {
+            const staticUrl = imageUrl.replace(/\.(gif|mp4|webm|mov)$/, '.jpg');
+            cacheTodayImage(staticUrl);
+          }
         }
 
         // Setup midnight preloading for tomorrow's image
         setupMidnightPreloading();
       } catch (error) {
         logger.error('Error loading initial state:', error);
+        setImageError(true);
       } finally {
         dispatch(setLoading(false));
       }
@@ -105,10 +115,9 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
 
   // Save animation preference when it changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('animationsEnabled', JSON.stringify(animationsEnabled));
-    }
-  }, [animationsEnabled]);
+    if (skipInit || typeof window === 'undefined') return;
+    localStorage.setItem('animationsEnabled', JSON.stringify(animationsEnabled));
+  }, [animationsEnabled, skipInit]);
 
   // Setup midnight preloading timer
   const setupMidnightPreloading = () => {
@@ -123,11 +132,14 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
     const timeoutId = setTimeout(() => {
       // Preload tomorrow's image
       preloadTomorrowImage();
-      
+
       // Set up daily recurring preloading
-      setInterval(() => {
-        preloadTomorrowImage();
-      }, 24 * 60 * 60 * 1000); // Every 24 hours
+      setInterval(
+        () => {
+          preloadTomorrowImage();
+        },
+        24 * 60 * 60 * 1000
+      ); // Every 24 hours
     }, timeUntilMidnight);
 
     // Cleanup function
@@ -168,25 +180,29 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
     // Try fallback to yesterday's image
     const today = new Date().toISOString().split('T')[0];
     const baseUrl = imageServiceConfig.getBaseUrl();
-    
-    if ((baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) && !imageUrl?.includes('fallback')) {
+
+    if (
+      (baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) &&
+      imageUrl &&
+      !imageUrl.includes('fallback')
+    ) {
       // First try: if we failed on animated content, try static image
-      if (animationsEnabled && imageServiceConfig.isAnimatedUrl(imageUrl)) {
+      if (animationsEnabled && imageUrl && imageServiceConfig.isAnimatedUrl(imageUrl)) {
         const staticUrl = imageUrl.replace(/\.(gif|mp4|webm|mov)$/, '.jpg');
-        const staticUrlWithMarker = `${staticUrl}&fallback=static`;
+        const staticUrlWithMarker = `${staticUrl}${staticUrl.includes('?') ? '&' : '?'}fallback=static`;
         dispatch(setImageUrl(staticUrlWithMarker));
         setImageLoading(true);
         return;
       }
-      
+
       // Second try: yesterday's image
       const fallbackUrl = imageServiceConfig.getFallbackImageUrl(today);
-      const fallbackUrlWithMarker = `${fallbackUrl}&fallback=yesterday`;
+      const fallbackUrlWithMarker = `${fallbackUrl}${fallbackUrl.includes('?') ? '&' : '?'}fallback=yesterday`;
       dispatch(setImageUrl(fallbackUrlWithMarker));
       setImageLoading(true);
       return;
     }
-    
+
     // If fallback also fails or not using S3, show error
     setImageLoading(false);
     setImageError(true);

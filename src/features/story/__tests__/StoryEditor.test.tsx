@@ -40,8 +40,14 @@ jest.mock('@/shared/config/imageService', () => ({
   imageServiceConfig: {
     getImageUrl: jest.fn().mockImplementation(date => `https://picsum.photos/800/400?date=${date}`),
     getBaseUrl: jest.fn().mockReturnValue('https://picsum.photos'),
-    getS3ImageUrl: jest.fn().mockImplementation(date => `https://picsum.photos/800/400?date=${date}`),
-    getFallbackImageUrl: jest.fn().mockImplementation(date => `https://picsum.photos/800/400?date=${date}&fallback=true`),
+    getS3ImageUrl: jest
+      .fn()
+      .mockImplementation(date => `https://picsum.photos/800/400?date=${date}`),
+    getFallbackImageUrl: jest
+      .fn()
+      .mockImplementation(date => `https://picsum.photos/800/400?date=${date}&fallback=true`),
+    isVideoUrl: jest.fn(() => false),
+    isAnimatedUrl: jest.fn(() => false),
   },
 }));
 
@@ -127,6 +133,9 @@ describe('StoryEditor Integration', () => {
     beforeEach(() => {
       // Ensure each test starts with a clean state
       jest.clearAllMocks();
+      mockLocalStorage.clear();
+      mockLocalStorage.getItem.mockReturnValue(null);
+      mockLocalStorage.setItem = jest.fn();
     });
 
     it('should allow saving a new story', async () => {

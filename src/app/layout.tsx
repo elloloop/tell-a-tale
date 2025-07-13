@@ -35,10 +35,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${caveat.variable}`}>
-      <body className="min-h-screen flex flex-col">
-        <main className="flex-grow container mx-auto">
+      <body className="min-h-screen flex flex-col bg-gray-50">
+        <main className="flex-grow container mx-auto px-4 py-8">
           <Providers>{children}</Providers>
         </main>
+        <footer className="text-center p-4 text-sm text-gray-500">
+          © 2025 Tell A Tale. All rights reserved.
+        </footer>
       </body>
     </html>
   );

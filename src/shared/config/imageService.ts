@@ -17,12 +17,12 @@ export const imageServiceConfig = {
   getS3ImageUrl: (date: string, region?: string) => {
     const baseUrl = imageServiceConfig.getBaseUrl();
     const regionPath = regionService.getRegionPath(region);
-    
+
     // If using S3, construct path as: baseUrl/region/YYYY-MM-DD.jpg
     if (baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) {
       return `${baseUrl}/${regionPath}/${date}.jpg`;
     }
-    
+
     // For non-S3 URLs, fallback to original format with region as parameter
     return `${baseUrl}/${imageServiceConfig.width}/${imageServiceConfig.height}?date=${date}&region=${regionPath}`;
   },
@@ -37,7 +37,7 @@ export const imageServiceConfig = {
   getMediaUrl: (date: string, region?: string, preferVideo = false) => {
     const baseUrl = imageServiceConfig.getBaseUrl();
     const regionPath = regionService.getRegionPath(region);
-    
+
     // If using S3, try video first if preferred, then fallback to image
     if (baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) {
       if (preferVideo) {
@@ -48,16 +48,18 @@ export const imageServiceConfig = {
         return `${baseUrl}/${regionPath}/${date}.gif`;
       }
     }
-    
+
     // For non-S3 URLs, fallback to original format
-    return imageServiceConfig.getS3ImageUrl(date, region);
+    return `${baseUrl}/${imageServiceConfig.width}/${imageServiceConfig.height}?date=${date}&region=${regionPath}`;
   },
   // Check if URL is for video content
   isVideoUrl: (url: string) => {
+    if (!url) return false;
     return url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
   },
   // Check if URL is for animated content
   isAnimatedUrl: (url: string) => {
+    if (!url) return false;
     return url.includes('.gif') || imageServiceConfig.isVideoUrl(url);
   },
   // Get tomorrow's image URL for preloading
