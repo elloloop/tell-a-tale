@@ -29,13 +29,40 @@ jest.mock('@/shared/lib/logger', () => ({
   },
 }));
 
-// Mock the imageServiceConfig
+// Mock the image service module
 jest.mock('@/shared/config/imageService', () => ({
   imageServiceConfig: {
-    getImageUrl: jest.fn().mockImplementation(date => `https://picsum.photos/800/400?date=${date}`),
-    getBaseUrl: jest.fn().mockReturnValue('https://picsum.photos'),
-    getS3ImageUrl: jest.fn().mockImplementation(date => `https://picsum.photos/800/400?date=${date}`),
-    getFallbackImageUrl: jest.fn().mockImplementation(date => `https://picsum.photos/800/400?date=${date}&fallback=true`),
+    getBaseUrl: jest.fn(() => 'https://picsum.photos'),
+    width: 800,
+    height: 400,
+    getImageUrl: jest.fn(
+      (date: string, region?: string, language?: string) =>
+        `https://picsum.photos/${region || 'global'}/${language || 'en'}/${date}`
+    ),
+    getImageUrlWithFallback: jest.fn(
+      (date: string, region?: string, language?: string) =>
+        `https://picsum.photos/${region || 'global'}/${language || 'en'}/${date}`
+    ),
+    getPlaceholderImage: jest.fn(() => `https://picsum.photos/800/400?random=placeholder`),
+    getFallbackImageUrl: jest.fn(
+      (date: string, region?: string, language?: string) =>
+        `https://picsum.photos/${region || 'global'}/${language || 'en'}/${date}&fallback=true`
+    ),
+    getMediaUrl: jest.fn(
+      (date: string, region?: string, language?: string, preferVideo?: boolean) =>
+        `https://picsum.photos/${region || 'global'}/${language || 'en'}/${date}${preferVideo ? '.mp4' : '.gif'}`
+    ),
+    isVideoUrl: jest.fn(() => false),
+    isAnimatedUrl: jest.fn(() => false),
+    getTomorrowImageUrl: jest.fn(
+      (region?: string, language?: string) =>
+        `https://picsum.photos/${region || 'global'}/${language || 'en'}/tomorrow`
+    ),
+    getS3ImageUrl: jest.fn((date: string) => `https://picsum.photos/800/400?date=${date}`),
+    getFirebaseImageUrl: jest.fn(
+      (date: string, region?: string, language?: string) =>
+        `https://picsum.photos/${region || 'global'}/${language || 'en'}/${date}`
+    ),
   },
 }));
 
@@ -154,7 +181,7 @@ describe('StoryContext', () => {
 
   it('should handle image loading and error states', () => {
     const { result } = renderHook(() => useStory(), {
-      wrapper: ({ children }: { children: ReactNode }) => (
+      wrapper: ({ children }) => (
         <Provider
           store={configureStore({
             reducer: { story: storyReducer },
@@ -172,17 +199,23 @@ describe('StoryContext', () => {
       ),
     });
 
+    // Initially loading
+    expect(result.current.imageLoading).toBe(true);
+    expect(result.current.imageError).toBe(false);
+
+    // Simulate image load success
     act(() => {
       result.current.handleImageLoad();
     });
     expect(result.current.imageLoading).toBe(false);
     expect(result.current.imageError).toBe(false);
 
+    // Simulate image error - should set loading to true for fallback
     act(() => {
       result.current.handleImageError();
     });
-    expect(result.current.imageLoading).toBe(false);
-    expect(result.current.imageError).toBe(true);
+    expect(result.current.imageLoading).toBe(true);
+    expect(result.current.imageError).toBe(false);
   });
 
   it('should handle edit and cancel operations', () => {
@@ -254,16 +287,16 @@ describe('StoryContext', () => {
 
   it('should handle image loading states correctly', () => {
     const { result } = renderHook(() => useStory(), {
-      wrapper: ({ children }: { children: ReactNode }) => (
+      wrapper: ({ children }) => (
         <Provider
           store={configureStore({
             reducer: { story: storyReducer },
             preloadedState: {
               story: {
-                story: '',
-                imageUrl: '',
+                story: 'Test story',
+                imageUrl: 'https://example.com/image.jpg',
                 isLoading: false,
-              } as StoryState,
+              },
             },
           })}
         >
@@ -272,23 +305,23 @@ describe('StoryContext', () => {
       ),
     });
 
-    // Initial state
+    // Initially not loading
     expect(result.current.imageLoading).toBe(true);
     expect(result.current.imageError).toBe(false);
 
-    // After successful load
+    // Simulate image load success
     act(() => {
       result.current.handleImageLoad();
     });
     expect(result.current.imageLoading).toBe(false);
     expect(result.current.imageError).toBe(false);
 
-    // After error
+    // Simulate image error - should set loading to true for fallback
     act(() => {
       result.current.handleImageError();
     });
-    expect(result.current.imageLoading).toBe(false);
-    expect(result.current.imageError).toBe(true);
+    expect(result.current.imageLoading).toBe(true);
+    expect(result.current.imageError).toBe(false);
   });
 
   it('should handle edit mode transitions', () => {

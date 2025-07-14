@@ -1,12 +1,20 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  Dispatch,
+  SetStateAction,
+} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setStory, setImageUrl, setLoading } from '@/features/story/store/storySlice';
 import { RootState } from '@/shared/store/store';
 import { logger } from '@/shared/lib/logger';
 import { imageServiceConfig } from '@/shared/config/imageService';
-import { cacheTodayImage, preloadTomorrowImage } from '@/shared/lib/serviceWorker';
+import { cacheTodayImage } from '@/shared/lib/serviceWorker';
 
 interface StoryContextType {
   story: string | null;
@@ -41,6 +49,74 @@ interface StoryProviderProps {
   skipInit?: boolean; // for testing only
 }
 
+type LoadInitialStateArgs = {
+  dispatch: ReturnType<typeof useDispatch>;
+  setDraft: Dispatch<SetStateAction<string>>;
+  setAnimationsEnabled: Dispatch<SetStateAction<boolean>>;
+  setImageError: Dispatch<SetStateAction<boolean>>;
+};
+
+function loadInitialState(
+  { dispatch, setDraft, setAnimationsEnabled, setImageError }: LoadInitialStateArgs,
+  skipInit: boolean,
+  animationsEnabled: boolean
+) {
+  if (skipInit) return;
+  dispatch(setLoading(true));
+  try {
+    const savedStory = localStorage.getItem('todayStory');
+    if (savedStory) {
+      dispatch(setStory(savedStory));
+      setDraft(savedStory);
+    }
+
+    // Load animation preference
+    const savedAnimationPref = localStorage.getItem('animationsEnabled');
+    if (savedAnimationPref !== null) {
+      setAnimationsEnabled(JSON.parse(savedAnimationPref));
+    }
+
+    // Determine language from localStorage or domain
+    let language = 'en';
+    if (typeof window !== 'undefined') {
+      const storedLang = window.localStorage.getItem('userLanguage');
+      if (storedLang) language = storedLang;
+      else {
+        const hostname = window.location.hostname;
+        if (hostname.includes('bullikatha.web.app')) language = 'te';
+        else if (hostname.includes('penloop.web.app')) language = 'en';
+      }
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    let imageUrl: string;
+
+    // Use deterministic image URL based on language and date
+    if (animationsEnabled) {
+      // Try animated content first
+      imageUrl = imageServiceConfig.getMediaUrl(today, undefined, language, false);
+    } else {
+      // Use static image if animations are disabled
+      imageUrl = imageServiceConfig.getImageUrl(today, undefined, language);
+    }
+
+    if (imageUrl) {
+      dispatch(setImageUrl(imageUrl));
+      cacheTodayImage(imageUrl);
+      if (animationsEnabled && imageServiceConfig.isAnimatedUrl(imageUrl)) {
+        const staticUrl = imageUrl.replace(/\.(gif|mp4|webm|mov)$/, '');
+        cacheTodayImage(staticUrl);
+      }
+    }
+    // Removed unused setupMidnightPreloading assignment
+  } catch (error) {
+    logger.error('Error loading initial state:', error);
+    setImageError(true);
+  } finally {
+    dispatch(setLoading(false));
+  }
+}
+
 export function StoryProvider({ children, skipInit = false }: StoryProviderProps) {
   const dispatch = useDispatch();
   const { story, imageUrl, isLoading } = useSelector((state: RootState) => state.story);
@@ -52,101 +128,18 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
 
   // Initialize story from localStorage and fetch image
   useEffect(() => {
-    if (skipInit) return;
-
-    const loadInitialState = async () => {
-      dispatch(setLoading(true));
-      try {
-        const savedStory = localStorage.getItem('todayStory');
-        if (savedStory) {
-          dispatch(setStory(savedStory));
-          setDraft(savedStory);
-        }
-
-        // Load animation preference
-        const savedAnimationPref = localStorage.getItem('animationsEnabled');
-        if (savedAnimationPref !== null) {
-          setAnimationsEnabled(JSON.parse(savedAnimationPref));
-        }
-
-        const today = new Date().toISOString().split('T')[0];
-        const baseUrl = imageServiceConfig.getBaseUrl();
-        let imageUrl;
-
-        // Attempt to load the appropriate image based on animation preferences
-        if (baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) {
-          if (animationsEnabled) {
-            // Try animated content first
-            imageUrl = imageServiceConfig.getMediaUrl(today, undefined, false);
-          } else {
-            // Use static image if animations are disabled
-            imageUrl = imageServiceConfig.getS3ImageUrl(today);
-          }
-        } else {
-          // Fallback to regular image service
-          imageUrl = imageServiceConfig.getImageUrl(today);
-        }
-
-        if (imageUrl) {
-          dispatch(setImageUrl(imageUrl));
-
-          // Cache today's image for offline access
-          cacheTodayImage(imageUrl);
-
-          // Also cache a static version as fallback
-          if (animationsEnabled && imageServiceConfig.isAnimatedUrl(imageUrl)) {
-            const staticUrl = imageUrl.replace(/\.(gif|mp4|webm|mov)$/, '.jpg');
-            cacheTodayImage(staticUrl);
-          }
-        }
-
-        // Setup midnight preloading for tomorrow's image
-        setupMidnightPreloading();
-      } catch (error) {
-        logger.error('Error loading initial state:', error);
-        setImageError(true);
-      } finally {
-        dispatch(setLoading(false));
-      }
-    };
-
-    loadInitialState();
-  }, [dispatch, skipInit, animationsEnabled]);
+    loadInitialState(
+      { dispatch, setDraft, setAnimationsEnabled, setImageError },
+      skipInit,
+      animationsEnabled
+    );
+  }, [skipInit]);
 
   // Save animation preference when it changes
   useEffect(() => {
     if (skipInit || typeof window === 'undefined') return;
     localStorage.setItem('animationsEnabled', JSON.stringify(animationsEnabled));
   }, [animationsEnabled, skipInit]);
-
-  // Setup midnight preloading timer
-  const setupMidnightPreloading = () => {
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0); // Set to midnight
-
-    const timeUntilMidnight = tomorrow.getTime() - now.getTime();
-
-    // Set initial timer for next midnight
-    const timeoutId = setTimeout(() => {
-      // Preload tomorrow's image
-      preloadTomorrowImage();
-
-      // Set up daily recurring preloading
-      setInterval(
-        () => {
-          preloadTomorrowImage();
-        },
-        24 * 60 * 60 * 1000
-      ); // Every 24 hours
-    }, timeUntilMidnight);
-
-    // Cleanup function
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  };
 
   // Sync draft with story when story changes
   useEffect(() => {
@@ -179,16 +172,11 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
   const handleImageError = () => {
     // Try fallback to yesterday's image
     const today = new Date().toISOString().split('T')[0];
-    const baseUrl = imageServiceConfig.getBaseUrl();
 
-    if (
-      (baseUrl.includes('s3.amazonaws.com') || baseUrl.includes('amazonaws.com')) &&
-      imageUrl &&
-      !imageUrl.includes('fallback')
-    ) {
+    if (imageUrl && !imageUrl.includes('fallback')) {
       // First try: if we failed on animated content, try static image
       if (animationsEnabled && imageUrl && imageServiceConfig.isAnimatedUrl(imageUrl)) {
-        const staticUrl = imageUrl.replace(/\.(gif|mp4|webm|mov)$/, '.jpg');
+        const staticUrl = imageServiceConfig.getImageUrl(today, undefined, 'en');
         const staticUrlWithMarker = `${staticUrl}${staticUrl.includes('?') ? '&' : '?'}fallback=static`;
         dispatch(setImageUrl(staticUrlWithMarker));
         setImageLoading(true);
@@ -196,16 +184,17 @@ export function StoryProvider({ children, skipInit = false }: StoryProviderProps
       }
 
       // Second try: yesterday's image
-      const fallbackUrl = imageServiceConfig.getFallbackImageUrl(today);
+      const fallbackUrl = imageServiceConfig.getFallbackImageUrl(today, undefined, 'en');
       const fallbackUrlWithMarker = `${fallbackUrl}${fallbackUrl.includes('?') ? '&' : '?'}fallback=yesterday`;
       dispatch(setImageUrl(fallbackUrlWithMarker));
       setImageLoading(true);
       return;
     }
 
-    // If fallback also fails or not using S3, show error
-    setImageLoading(false);
-    setImageError(true);
+    // If fallback also fails, use placeholder image
+    const placeholderUrl = imageServiceConfig.getPlaceholderImage();
+    dispatch(setImageUrl(placeholderUrl));
+    setImageLoading(true);
   };
 
   const value = {

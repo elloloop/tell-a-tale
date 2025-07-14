@@ -12,6 +12,7 @@ interface MediaDisplayProps {
   onLoad?: () => void;
   onError?: () => void;
   fallbackSrc?: string;
+  placeholderSrc?: string; // NEW
   autoplayAnimations?: boolean;
   muteVideos?: boolean;
 }
@@ -25,6 +26,7 @@ export default function MediaDisplay({
   onLoad,
   onError,
   fallbackSrc,
+  placeholderSrc, // NEW
   autoplayAnimations = true,
   muteVideos = true,
 }: MediaDisplayProps) {
@@ -53,14 +55,18 @@ export default function MediaDisplay({
   // Handle media load error with fallback logic
   const handleError = () => {
     if (fallbackSrc && currentSrc !== fallbackSrc) {
-      // Try fallback URL
       setCurrentSrc(fallbackSrc);
       setIsLoading(true);
       setHasError(false);
       return;
     }
-
-    // If we're trying an animated version, fallback to static image
+    // Try placeholderSrc if provided and not already tried
+    if (placeholderSrc && currentSrc !== placeholderSrc) {
+      setCurrentSrc(placeholderSrc);
+      setIsLoading(true);
+      setHasError(false);
+      return;
+    }
     if (imageServiceConfig.isAnimatedUrl(currentSrc) && !currentSrc.includes('.jpg')) {
       const staticUrl = currentSrc.replace(/\.(gif|mp4|webm|mov)$/, '.jpg');
       setCurrentSrc(staticUrl);
@@ -68,8 +74,6 @@ export default function MediaDisplay({
       setHasError(false);
       return;
     }
-
-    // Final fallback - show error
     setIsLoading(false);
     setHasError(true);
     onError?.();
@@ -148,6 +152,7 @@ export default function MediaDisplay({
   }
 
   // Render image
+  console.log('MediaDisplay currentSrc:', currentSrc);
   return (
     <img
       src={currentSrc}
@@ -158,6 +163,7 @@ export default function MediaDisplay({
       onLoad={handleLoad}
       onError={handleError}
       data-testid="story-image"
+      style={{ display: 'block' }}
     />
   );
 }

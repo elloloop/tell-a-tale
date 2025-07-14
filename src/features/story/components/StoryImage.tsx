@@ -4,19 +4,31 @@ import { useStory } from '@/features/story/contexts/StoryContext';
 import MediaDisplay from '@/shared/components/MediaDisplay';
 import { imageServiceConfig } from '@/shared/config/imageService';
 
+function getCurrentLanguage() {
+  if (typeof window !== 'undefined') {
+    const storedLang = window.localStorage.getItem('userLanguage');
+    if (storedLang) return storedLang;
+    const hostname = window.location.hostname;
+    if (hostname.includes('bullikatha.web.app')) return 'te';
+    if (hostname.includes('penloop.web.app')) return 'en';
+  }
+  return 'en';
+}
+
 export default function StoryImage() {
-  const { 
-    imageUrl, 
-    imageLoading, 
-    imageError, 
-    handleImageLoad, 
+  const {
+    imageUrl,
+    imageLoading,
+    imageError,
+    handleImageLoad,
     handleImageError,
-    animationsEnabled 
+    animationsEnabled,
   } = useStory();
 
-  // Generate fallback URL for error handling
   const today = new Date().toISOString().split('T')[0];
-  const fallbackUrl = imageServiceConfig.getFallbackImageUrl(today);
+  const language = getCurrentLanguage();
+  const fallbackUrl = imageServiceConfig.getFallbackImageUrl(today, undefined, language);
+  const placeholderUrl = imageServiceConfig.getPlaceholderImage();
 
   return (
     <div className="relative">
@@ -36,6 +48,7 @@ export default function StoryImage() {
             onLoad={handleImageLoad}
             onError={handleImageError}
             fallbackSrc={fallbackUrl}
+            placeholderSrc={placeholderUrl}
             autoplayAnimations={animationsEnabled}
             muteVideos={true}
           />

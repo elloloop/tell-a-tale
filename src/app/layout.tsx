@@ -19,14 +19,21 @@ export const metadata: Metadata = {
   title: 'Tell A Tale',
   description: 'Share your stories with the world.',
   manifest: '/manifest.json',
-  themeColor: '#000000',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Tell A Tale',
   },
 };
+
+export function generateViewport() {
+  return {
+    themeColor: '#000000',
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  };
+}
 
 export default function RootLayout({
   children,

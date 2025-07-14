@@ -1,45 +1,65 @@
 'use client';
 
-import { useState } from 'react';
-import { regionService, SUPPORTED_REGIONS } from '@/shared/config/regionService';
+import { useState, useEffect } from 'react';
 
-interface RegionSelectorProps {
+// Supported languages
+const SUPPORTED_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'te', name: 'తెలుగు' },
+];
+
+function detectLanguageFromDomain(hostname?: string): string {
+  if (!hostname && typeof window !== 'undefined') {
+    hostname = window.location.hostname;
+  }
+  if (!hostname) return 'en';
+  if (hostname.includes('bullikatha.web.app')) return 'te';
+  if (hostname.includes('penloop.web.app')) return 'en';
+  // Add more mappings as needed
+  return 'en';
+}
+
+interface LanguageSelectorProps {
   className?: string;
 }
 
-export default function RegionSelector({ className = '' }: RegionSelectorProps) {
-  const [currentRegion, setCurrentRegion] = useState(regionService.getCurrentRegion());
+export default function LanguageSelector({ className = '' }: LanguageSelectorProps) {
+  // Hydration-safe: default to domain-detected language
+  const [currentLanguage, setCurrentLanguage] = useState(() => detectLanguageFromDomain());
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleRegionChange = (regionCode: string) => {
-    if (regionCode === regionService.getRegionFromDomain()) {
-      // If selecting the detected region, clear override
-      regionService.clearRegionOverride();
-    } else {
-      // Set region override
-      regionService.setRegionOverride(regionCode);
-    }
-    setCurrentRegion(regionCode);
-    setIsOpen(false);
-    
-    // Reload page to apply region change
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.location.reload();
+      const stored = window.localStorage.getItem('userLanguage');
+      if (stored && SUPPORTED_LANGUAGES.some(l => l.code === stored)) {
+        setCurrentLanguage(stored);
+      } else {
+        // If not stored, set based on domain
+        setCurrentLanguage(detectLanguageFromDomain(window.location.hostname));
+      }
+    }
+  }, []);
+
+  const handleLanguageChange = (langCode: string) => {
+    setCurrentLanguage(langCode);
+    setIsOpen(false);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('userLanguage', langCode);
+      // Optionally reload or trigger i18n update here
     }
   };
 
-  const detectedRegion = regionService.getRegionFromDomain();
-  const currentRegionInfo = regionService.getRegionInfo(currentRegion);
+  const currentLanguageInfo = SUPPORTED_LANGUAGES.find(l => l.code === currentLanguage);
 
   return (
     <div className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-        data-testid="region-selector-button"
+        data-testid="language-selector-button"
       >
-        <span>🌍</span>
-        <span>{currentRegionInfo?.name || 'Global'}</span>
+        <span>🌐</span>
+        <span>{currentLanguageInfo?.name || 'Language'}</span>
         <svg
           className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
@@ -52,22 +72,17 @@ export default function RegionSelector({ className = '' }: RegionSelectorProps) 
 
       {isOpen && (
         <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-          {SUPPORTED_REGIONS.map((region) => (
+          {SUPPORTED_LANGUAGES.map(lang => (
             <button
-              key={region.code}
-              onClick={() => handleRegionChange(region.code)}
+              key={lang.code}
+              onClick={() => handleLanguageChange(lang.code)}
               className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between ${
-                currentRegion === region.code ? 'bg-blue-50 text-blue-700' : ''
+                currentLanguage === lang.code ? 'bg-blue-50 text-blue-700' : ''
               }`}
-              data-testid={`region-option-${region.code}`}
+              data-testid={`language-option-${lang.code}`}
             >
-              <span>{region.name}</span>
-              {region.code === detectedRegion && (
-                <span className="text-xs text-gray-500">(detected)</span>
-              )}
-              {currentRegion === region.code && (
-                <span className="text-blue-600">✓</span>
-              )}
+              <span>{lang.name}</span>
+              {currentLanguage === lang.code && <span className="text-blue-600">✓</span>}
             </button>
           ))}
         </div>
@@ -78,7 +93,7 @@ export default function RegionSelector({ className = '' }: RegionSelectorProps) 
         <div
           className="fixed inset-0 z-0"
           onClick={() => setIsOpen(false)}
-          data-testid="region-selector-overlay"
+          data-testid="language-selector-overlay"
         />
       )}
     </div>

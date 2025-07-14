@@ -11,6 +11,7 @@ jest.mock('@/shared/config/imageService', () => ({
     getFallbackImageUrl: jest.fn(() => 'https://example.com/fallback.jpg'),
     isVideoUrl: jest.fn(() => false),
     isAnimatedUrl: jest.fn(() => false),
+    getPlaceholderImage: jest.fn(() => 'https://example.com/placeholder.jpg'),
   },
 }));
 
@@ -173,12 +174,12 @@ describe('StoryImage', () => {
         expect(image).toHaveAttribute('src', expect.stringContaining('fallback'));
       });
 
-      fireEvent.error(image); // Second error triggers error UI
+      fireEvent.error(image); // Second error triggers placeholder
 
-      // Now the error UI should be rendered
+      // Now the placeholder image should be rendered
       await waitFor(() => {
-        expect(screen.getByText(/unable to load media/i)).toBeInTheDocument();
-        expect(screen.queryByTestId('story-image')).not.toBeInTheDocument();
+        image = screen.getByTestId('story-image');
+        expect(image).toHaveAttribute('src', expect.stringContaining('placeholder'));
       });
     });
   });
