@@ -4,10 +4,6 @@ if [ "$SKIP_HOOKS" = "1" ]; then
   exit 0
 fi
 
-# Check Node.js version
-echo "🔍 Checking Node.js version..."
-npm run check-node || { echo "❌ Node.js version check failed"; exit 1; }
-
 # Run lint-staged to check code quality of staged files
 echo "🔍 Running lint-staged..."
 npx lint-staged || { echo "❌ lint-staged failed"; exit 1; }

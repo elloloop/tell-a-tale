@@ -1,4 +1,5 @@
-import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
+import React from 'react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -35,10 +36,40 @@ jest.mock('next/image', () => ({
   },
 }));
 
-// Mock the imageServiceConfig
+// Mock the image service module
 jest.mock('@/shared/config/imageService', () => ({
   imageServiceConfig: {
-    getImageUrl: jest.fn().mockImplementation(date => `https://picsum.photos/800/400?date=${date}`),
+    getBaseUrl: jest.fn(() => 'https://picsum.photos'),
+    width: 800,
+    height: 400,
+    getImageUrl: jest.fn(
+      (date: string, region?: string, language?: string) =>
+        `https://picsum.photos/${region || 'global'}/${language || 'en'}/${date}`
+    ),
+    getImageUrlWithFallback: jest.fn(
+      (date: string, region?: string, language?: string) =>
+        `https://picsum.photos/${region || 'global'}/${language || 'en'}/${date}`
+    ),
+    getPlaceholderImage: jest.fn(() => `https://picsum.photos/800/400?random=placeholder`),
+    getFallbackImageUrl: jest.fn(
+      (date: string, region?: string, language?: string) =>
+        `https://picsum.photos/${region || 'global'}/${language || 'en'}/${date}&fallback=true`
+    ),
+    getMediaUrl: jest.fn(
+      (date: string, region?: string, language?: string, preferVideo?: boolean) =>
+        `https://picsum.photos/${region || 'global'}/${language || 'en'}/${date}${preferVideo ? '.mp4' : '.gif'}`
+    ),
+    isVideoUrl: jest.fn(() => false),
+    isAnimatedUrl: jest.fn(() => false),
+    getTomorrowImageUrl: jest.fn(
+      (region?: string, language?: string) =>
+        `https://picsum.photos/${region || 'global'}/${language || 'en'}/tomorrow`
+    ),
+    getS3ImageUrl: jest.fn((date: string) => `https://picsum.photos/800/400?date=${date}`),
+    getFirebaseImageUrl: jest.fn(
+      (date: string, region?: string, language?: string) =>
+        `https://picsum.photos/${region || 'global'}/${language || 'en'}/${date}`
+    ),
   },
 }));
 
@@ -124,6 +155,9 @@ describe('StoryEditor Integration', () => {
     beforeEach(() => {
       // Ensure each test starts with a clean state
       jest.clearAllMocks();
+      mockLocalStorage.clear();
+      mockLocalStorage.getItem.mockReturnValue(null);
+      mockLocalStorage.setItem = jest.fn();
     });
 
     it('should allow saving a new story', async () => {
@@ -278,8 +312,12 @@ describe('StoryEditor Integration', () => {
     it('should show error state when image fails to load', () => {
       renderWithRedux(<StoryEditor skipInit={true} />);
       const image = screen.getByTestId('story-image');
+
+      // Fire the error event
       fireEvent.error(image);
-      expect(screen.getByText('Failed to load image')).toBeInTheDocument();
+
+      // The error should trigger fallback logic which sets loading to true
+      expect(screen.getByTestId('image-loading')).toBeInTheDocument();
     });
 
     it('should show image when loaded successfully', () => {

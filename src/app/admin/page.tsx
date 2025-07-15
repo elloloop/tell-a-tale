@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Calendar } from '@/features/admin/components/Calendar';
 import { DatePopup } from '@/features/admin/components/DatePopup';
+import { ImageUpload } from '@/features/admin/components/ImageUpload';
 
 export default function AdminPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -13,6 +14,11 @@ export default function AdminPage() {
 
   const handleClosePopup = () => {
     setSelectedDate(null);
+  };
+
+  const handleUploadComplete = (url: string) => {
+    console.log('Upload completed:', url);
+    // Could show a success message or update UI
   };
 
   return (
@@ -28,7 +34,13 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {selectedDate && <DatePopup date={selectedDate} onClose={handleClosePopup} />}
+      {selectedDate && (
+        <DatePopup date={selectedDate} onClose={handleClosePopup}>
+          <div className="mt-6">
+            <ImageUpload selectedDate={selectedDate} onUploadComplete={handleUploadComplete} />
+          </div>
+        </DatePopup>
+      )}
     </div>
   );
 }

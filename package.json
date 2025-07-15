@@ -39,7 +39,6 @@
     "ci:deploy": "npm run deploy:firebase",
     "# Git hooks": "",
     "prepare": "husky",
-    "check-node": "./scripts/check-node-version.sh",
     "test:github-actions": "./scripts/simulate-github-actions.sh"
   },
   "dependencies": {

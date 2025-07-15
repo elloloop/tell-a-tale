@@ -15,6 +15,12 @@ jest.mock('next/image', () => {
 
 // Mock the image service
 jest.mock('@/shared/config/imageService', () => ({
+  imageServiceConfig: {
+    getFallbackImageUrl: jest.fn(() => 'https://example.com/fallback.jpg'),
+    isVideoUrl: jest.fn(() => false),
+    isAnimatedUrl: jest.fn(() => false),
+    getPlaceholderImage: jest.fn(() => 'https://example.com/placeholder.jpg'),
+  },
   getImageOfTheDay: jest.fn().mockResolvedValue('https://example.com/image.jpg'),
 }));
 

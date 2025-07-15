@@ -43,7 +43,19 @@ To ensure high-quality, maintainable, and collaborative development, all agents 
 - Never commit secrets or sensitive data.
 - Use environment variables and secret managers for credentials.
 
-## 8. General Best Practices
+## 8. Node.js Version Management
+
+- This project requires **Node.js 22.5.0**
+- The version is specified in multiple places for AI agents to discover:
+  - `.nvmrc` file (primary source): `22.5.0`
+  - `package.json` engines field: `"node": "22.x"`
+  - `package.json` volta field: `"node": "22.5.0"`
+- AI agents should check these sources to determine the correct Node.js version
+- The project uses Volta for automatic version management (recommended)
+- For nvm users, run `nvm use` to switch to the correct version
+- GitHub Actions automatically uses the version from `.nvmrc`
+
+## 9. General Best Practices
 
 - Write clear, concise, and self-explanatory code.
 - Prefer small, focused commits and pull requests.

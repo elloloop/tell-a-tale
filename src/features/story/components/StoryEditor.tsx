@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useStory, StoryProvider } from '@/features/story/contexts/StoryContext';
+import { imageServiceConfig } from '@/shared/config/imageService';
 
 interface StoryEditorProps {
   className?: string;
@@ -64,29 +65,78 @@ function StoryContent() {
   );
 }
 
-// StoryImage component to handle image display
+// StorySettings component for animation toggle
+function StorySettings() {
+  const { animationsEnabled, setAnimationsEnabled } = useStory();
+
+  return (
+    <div className="mb-4 flex justify-end">
+      <button
+        onClick={() => setAnimationsEnabled(!animationsEnabled)}
+        className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+        title={`${animationsEnabled ? 'Disable' : 'Enable'} animations`}
+        data-testid="animation-toggle"
+      >
+        <span className="text-xl">{animationsEnabled ? '🎬' : '🖼️'}</span>
+        <span className="hidden sm:inline">
+          {animationsEnabled ? 'Animations On' : 'Static Images'}
+        </span>
+      </button>
+    </div>
+  );
+}
 function StoryImage() {
-  const { imageUrl, imageLoading, imageError, handleImageLoad, handleImageError } = useStory();
+  const {
+    imageUrl,
+    imageLoading,
+    imageError,
+    handleImageLoad,
+    handleImageError,
+    animationsEnabled,
+  } = useStory();
 
   return (
     <div className="relative">
-      {imageLoading && <div className="w-full h-64 bg-gray-200 animate-pulse rounded-lg" />}
+      {imageLoading && (
+        <div
+          className="w-full h-64 bg-gray-200 animate-pulse rounded-lg"
+          data-testid="image-loading"
+        />
+      )}
       {imageError ? (
-        <div className="w-full h-64 bg-gray-100 flex items-center justify-center rounded-lg">
+        <div
+          className="w-full h-64 bg-gray-100 flex items-center justify-center rounded-lg"
+          data-testid="image-error"
+        >
           <p className="text-gray-500">Failed to load image</p>
         </div>
       ) : (
         <div className="relative w-full h-64">
-          <Image
-            src={imageUrl}
-            alt="Image of the day"
-            fill
-            className="object-cover rounded-lg shadow-lg"
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-            style={{ display: imageLoading ? 'none' : 'block' }}
-            data-testid="story-image"
-          />
+          {imageUrl && imageServiceConfig.isVideoUrl(imageUrl) ? (
+            <video
+              src={imageUrl}
+              className="w-full h-full object-cover rounded-lg shadow-lg"
+              onLoadedData={handleImageLoad}
+              onError={handleImageError}
+              autoPlay={animationsEnabled}
+              loop
+              muted
+              playsInline
+              controls={false}
+              data-testid="story-video"
+            />
+          ) : imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt="Image of the day"
+              fill
+              className="object-cover rounded-lg shadow-lg"
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              style={{ display: imageLoading ? 'none' : 'block' }}
+              data-testid="story-image"
+            />
+          ) : null}
         </div>
       )}
     </div>
@@ -113,6 +163,7 @@ function StoryEditorContent({ className = '' }: { className?: string }) {
 
   return (
     <div className={`max-w-2xl mx-auto p-4 ${className}`} data-testid="story-editor">
+      <StorySettings />
       <StoryImage />
       <StoryContent />
     </div>
