@@ -16,7 +16,6 @@ const customJestConfig = {
   // Exclude Playwright tests and admin tests
   testPathIgnorePatterns: [
     '<rootDir>/e2e/',
-    '.*admin.*\\.test\\.[jt]sx?$',
     '.*admin.*\\.spec\\.[jt]sx?$',
   ],
   testMatch: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],

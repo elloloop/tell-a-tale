@@ -15,7 +15,9 @@ import {
 } from 'date-fns';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import dynamic from 'next/dynamic';
+const ChevronLeft = dynamic(() => import('lucide-react').then(mod => mod.ChevronLeft), { ssr: false });
+const ChevronRight = dynamic(() => import('lucide-react').then(mod => mod.ChevronRight), { ssr: false });
 
 interface CalendarProps {
   onDateClick: (date: Date) => void;
@@ -32,6 +34,7 @@ const CalendarDay = ({ date, isCurrentMonth, isToday, onClick }: CalendarDayProp
   return (
     <button
       onClick={onClick}
+      aria-label={format(date, 'yyyy-MM-dd')}
       className={cn(
         'h-10 w-10 rounded-full transition-colors hover:bg-accent hover:text-accent-foreground',
         !isCurrentMonth && 'text-muted-foreground',
@@ -55,6 +58,18 @@ export const Calendar = ({ onDateClick }: CalendarProps) => {
   const endDate = endOfWeek(monthEnd);
 
   const days = eachDayOfInterval({ start: startDate, end: endDate });
+
+  // Group days into weeks
+  const weeks: Date[][] = [];
+  let week: Date[] = [];
+  days.forEach(day => {
+    week.push(day);
+    if (week.length === 7) {
+      weeks.push(week);
+      week = [];
+    }
+  });
+  if (week.length) weeks.push(week);
 
   const handlePreviousMonth = () => {
     setCurrentDate(subMonths(currentDate, 1));
@@ -80,20 +95,26 @@ export const Calendar = ({ onDateClick }: CalendarProps) => {
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1 mb-1">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
           <div key={day} className="text-center text-sm font-medium text-muted-foreground">
             {day}
           </div>
         ))}
-        {days.map(day => (
-          <CalendarDay
-            key={day.toISOString()}
-            date={day}
-            isCurrentMonth={isSameMonth(day, currentDate)}
-            isToday={isToday(day)}
-            onClick={() => onDateClick(day)}
-          />
+      </div>
+      <div className="flex flex-col gap-1">
+        {weeks.map((week, i) => (
+          <div key={i} className="grid grid-cols-7 gap-1">
+            {week.map(day => (
+              <CalendarDay
+                key={day.toISOString()}
+                date={day}
+                isCurrentMonth={isSameMonth(day, currentDate)}
+                isToday={isToday(day)}
+                onClick={() => onDateClick(day)}
+              />
+            ))}
+          </div>
         ))}
       </div>
     </div>
